@@ -40,17 +40,18 @@ export function App() {
   const [selectedPartner, setSelectedPartner] = useState<PartnerBranch | null>(null);
   const [submittedApp, setSubmittedApp] = useState<ApplicationTrackerData | null>(null);
 
-  // Voice Engine
   const {
     isListening,
     transcript,
     setTranscript,
     startListening,
     stopListening,
+    resetTranscript,
     isSpeaking,
     speakText,
     stopSpeaking,
     errorMessage,
+    audioLevel,
   } = useVoice(language);
 
   // Offline detection
@@ -76,9 +77,7 @@ export function App() {
   // Flow Handlers
   const handleStartVoiceFromLanding = () => {
     setCurrentStep(2);
-    setTimeout(() => {
-      startListening();
-    }, 400);
+    startListening();
   };
 
   const handleStartTypeFromLanding = () => {
@@ -131,7 +130,7 @@ export function App() {
   const handleStartNewApplication = () => {
     setCurrentStep(1);
     setUserNeedText('');
-    setTranscript('');
+    resetTranscript();
     setSelectedScheme(null);
     setCompareScheme(null);
     setEmiData(null);
@@ -225,6 +224,7 @@ export function App() {
             language={language}
             transcript={transcript}
             isListening={isListening}
+            audioLevel={audioLevel}
             errorMessage={errorMessage}
             onToggleListening={() => {
               if (isListening) {

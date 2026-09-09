@@ -9,6 +9,7 @@ interface SpeakNeedScreenProps {
   language: LanguageCode;
   transcript: string;
   isListening: boolean;
+  audioLevel?: number;
   errorMessage?: string | null;
   onToggleListening: () => void;
   onSetTranscript: (text: string) => void;
@@ -21,6 +22,7 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   language,
   transcript,
   isListening,
+  audioLevel = 0,
   errorMessage,
   onToggleListening,
   onSetTranscript,
@@ -109,20 +111,21 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
           language={language}
           errorMessage={errorMessage}
           onReadAloudTranscript={onReadAloudTranscript}
+          audioLevel={audioLevel}
         />
 
         {/* Windows / Browser Troubleshooting Accordion */}
         <div className="mt-3 w-full">
           <details className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 cursor-pointer">
             <summary className="font-bold text-slate-700 select-none hover:text-blue-600">
-              🎙️ Voice not detecting on Windows laptop? Click here
+              🎙️ Voice not detecting? Click here for quick fixes
             </summary>
             <div className="mt-2 space-y-1.5 text-left text-slate-600 leading-relaxed pt-2 border-t border-slate-200">
-              <p><strong>1. Browser:</strong> Use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> (Firefox doesn't support Web Speech).</p>
-              <p><strong>2. Browser Permission:</strong> Click the 🔒 lock / icon in the address bar next to <code>localhost:3000</code> and ensure <strong>Microphone</strong> is set to <strong>Allow</strong>.</p>
-              <p><strong>3. Windows Settings:</strong> Go to <em>Settings &gt; Privacy &amp; security &gt; Microphone</em> and ensure <em>"Let apps access your microphone"</em> is turned <strong>ON</strong>.</p>
-              <p><strong>4. Localhost vs Network IP:</strong> Chrome disables microphone on <code>http://192.168.x.x</code>. Run directly on the Windows laptop with <code>http://localhost:3000</code>.</p>
-              <p><strong>5. Instant fallback:</strong> You can also tap any of the prompt chips below to test instantly!</p>
+              <p><strong>1. Browser Permission:</strong> Click the 🔒 lock / settings icon next to the address bar and ensure <strong>Microphone</strong> is set to <strong>Allow</strong>.</p>
+              <p><strong>2. Supported Browsers:</strong> Works natively on <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, and <strong>Safari</strong>.</p>
+              <p><strong>3. Windows Settings:</strong> Open Windows <em>Settings &gt; Privacy &amp; security &gt; Microphone</em> and make sure <em>"Let apps access your microphone"</em> is turned <strong>ON</strong>.</p>
+              <p><strong>4. HTTPS / Localhost:</strong> Browsers require a secure connection (Vercel HTTPS or <code>http://localhost:3000</code>). Insecure IP connections block microphone.</p>
+              <p><strong>5. Instant Testing:</strong> You can also tap any of the example prompt chips below to test scheme matching instantly without speaking!</p>
             </div>
           </details>
         </div>
