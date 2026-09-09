@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sahay AI — Voice Debug</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f8fafc; color: #1e293b; padding: 20px; max-width: 700px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .subtitle { color: #64748b; margin-bottom: 20px; font-size: 0.9rem; }
+    .step { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .step.pass { border-color: #22c55e; background: #f0fdf4; }
+    .step.fail { border-color: #ef4444; background: #fef2f2; }
+    .step.warn { border-color: #f59e0b; background: #fffbeb; }
+    .step.running { border-color: #3b82f6; background: #eff6ff; }
+    .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .step-num { width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; color: #475569; flex-shrink: 0; }
+    .step.pass .step-num { background: #22c55e; color: white; }
+    .step.fail .step-num { background: #ef4444; color: white; }
+    .step.warn .step-num { background: #f59e0b; color: white; }
+    .step-title { font-weight: 700; font-size: 1rem; }
+    .step-detail { font-size: 0.85rem; color: #475569; margin-left: 42px; line-height: 1.5; }
+    .step-detail code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+    .step-detail .fix { color: #dc2626; font-weight: 600; }
+    button.action { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 16px; display: block; width: 100%; }
+    button.action:hover { background: #1d4ed8; }
+    button.action:disabled { background: #94a3b8; cursor: not-allowed; }
+    #transcript-box { margin-top: 12px; padding: 12px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; font-size: 1.1rem; font-weight: 500; min-height: 48px; display: none; }
+    #volume-bar { height: 12px; background: #e2e8f0; border-radius: 6px; margin-top: 8px; overflow: hidden; display: none; }
+    #volume-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444); width: 0%; transition: width 100ms; border-radius: 6px; }
+    .log { font-size: 0.78rem; color: #64748b; margin-top: 4px; margin-left: 42px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Sahay AI — Voice Diagnostics</h1>
+  <p class="subtitle">This page tests each component of voice recognition. Open in <strong>Chrome</strong> or <strong>Edge</strong>.</p>
+
+  <div id="step1" class="step">
+    <div class="step-header"><div class="step-num">1</div><div class="step-title">Secure Context (HTTPS / localhost)</div></div>
+    <div class="step-detail" id="step1-detail">Checking...</div>
+  </div>
+
+  <div id="step2" class="step">
+    <div class="step-header"><div class="step-num">2</div><div class="step-title">SpeechRecognition API Available</div></div>
+    <div class="step-detail" id="step2-detail">Checking...</div>
+  </div>
+
+  <div id="step3" class="step">
+    <div class="step-header"><div class="step-num">3</div><div class="step-title">Microphone Permission</div></div>
+    <div class="step-detail" id="step3-detail">Waiting for test...</div>
+  </div>
+
+  <div id="step4" class="step">
+    <div class="step-header"><div class="step-num">4</div><div class="step-title">Microphone Audio Level (is mic picking up sound?)</div></div>
+    <div class="step-detail" id="step4-detail">Waiting for mic access...</div>
+    <div id="volume-bar"><div id="volume-fill"></div></div>
+  </div>
+
+  <div id="step5" class="step">
+    <div class="step-header"><div class="step-num">5</div><div class="step-title">Speech Recognition Engine Test</div></div>
+    <div class="step-detail" id="step5-detail">Waiting for steps above...</div>
+    <div id="transcript-box"></div>
+  </div>
+
+  <button class="action" id="startBtn" disabled>Run Full Diagnostic</button>
+
+  <div style="margin-top: 20px;">
+    <div id="step6" class="step">
+      <div class="step-header"><div class="step-num">6</div><div class="step-title">Browser & OS Info</div></div>
+      <div class="step-detail" id="step6-detail">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const setStep = (n, status, html) => {
+      $('step' + n).className = 'step ' + status;
+      $('step' + n + '-detail').innerHTML = html;
+    };
+
+    // --- Step 6: Browser info (immediate) ---
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    if (ua.includes('Edg/')) browser = 'Microsoft Edge';
+    else if (ua.includes('Chrome/')) browser = 'Google Chrome';
+    else if (ua.includes('Firefox/')) browser = 'Firefox';
+    else if (ua.includes('Safari/')) browser = 'Safari';
+    const isHttps = location.protocol === 'https:';
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    $('step6-detail').innerHTML = `
+      <strong>Browser:</strong> ${browser}<br>
+      <strong>URL:</strong> <code>${location.origin}</code><br>
+      <strong>Protocol:</strong> ${location.protocol} ${isHttps ? '✅ Secure' : isLocalhost ? '⚠️ localhost (OK)' : '❌ Insecure'}<br>
+      <strong>User Agent:</strong> <code style="word-break:break-all">${ua}</code>
+    `;
+
+    // --- Step 1: Secure context ---
+    if (window.isSecureContext) {
+      setStep(1, 'pass', `✅ Secure context confirmed (<code>${location.protocol}//${location.host}</code>)`);
+    } else {
+      setStep(1, 'fail', `❌ <span class="fix">NOT a secure context.</span> Microphone and speech recognition require HTTPS or localhost.<br><br>
+        <strong>Fix:</strong> Open this page via <code>https://your-vercel-url.vercel.app</code> or <code>http://localhost:3000</code>.<br>
+        Current URL: <code>${location.href}</code>`);
+    }
+
+    // --- Step 2: SpeechRecognition API ---
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+      setStep(2, 'pass', `✅ SpeechRecognition API found (<code>${window.SpeechRecognition ? 'SpeechRecognition' : 'webkitSpeechRecognition'}</code>)`);
+    } else {
+      setStep(2, 'fail', `❌ <span class="fix">SpeechRecognition API NOT available in this browser.</span><br><br>
+        <strong>Fix:</strong> Use <strong>Google Chrome</strong> (v33+) or <strong>Microsoft Edge</strong> (v79+).<br>
+        Firefox and older browsers do not support Web Speech API.<br>
+        Detected browser: <strong>${browser}</strong>`);
+    }
+
+    // Enable button if steps 1&2 pass
+    if (window.isSecureContext && SpeechRec) {
+      $('startBtn').disabled = false;
+    } else if (!window.isSecureContext) {
+      $('startBtn').textContent = '⚠️ Fix secure context first (see Step 1)';
+    } else {
+      $('startBtn').textContent = '⚠️ Switch to Chrome/Edge first (see Step 2)';
+    }
+
+    // --- Main diagnostic flow ---
+    $('startBtn').addEventListener('click', async () => {
+      $('startBtn').disabled = true;
+      $('startBtn').textContent = 'Running...';
+
+      // Step 3: Microphone permission
+      setStep(3, 'running', '🔄 Requesting microphone access...');
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setStep(3, 'pass', `✅ Microphone access GRANTED. Tracks: ${stream.getAudioTracks().map(t => t.label).join(', ') || 'default'}`);
+      } catch (err) {
+        const name = err.name || '';
+        const msg = err.message || '';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+          setStep(3, 'fail', `❌ <span class="fix">Microphone BLOCKED by browser.</span><br><br>
+            <strong>Fix:</strong><br>
+            1. Click the 🔒 lock / tune icon in the address bar<br>
+            2. Find <strong>Microphone</strong> and set it to <strong>Allow</strong><br>
+            3. Reload the page and try again<br><br>
+            Also check: Windows Settings → Privacy & Security → Microphone → "Let desktop apps access your microphone" = <strong>ON</strong><br><br>
+            <code>${name}: ${msg}</code>`);
+        } else if (name === 'NotFoundError') {
+          setStep(3, 'fail', `❌ <span class="fix">No microphone hardware detected.</span><br><br>
+            <strong>Fix:</strong> Plug in a microphone or headset, then reload this page.<br><br>
+            <code>${name}: ${msg}</code>`);
+        } else if (name === 'NotReadableError') {
+          setStep(3, 'fail', `❌ <span class="fix">Microphone is in use by another application.</span><br><br>
+            <strong>Fix:</strong> Close any apps using the mic (Zoom, Teams, Discord, OBS, etc.), then try again.<br><br>
+            <code>${name}: ${msg}</code>`);
+        } else {
+          setStep(3, 'fail', `❌ <span class="fix">Microphone error: ${name}</span><br><code>${msg}</code>`);
+        }
+        $('startBtn').textContent = 'Retry Diagnostic';
+        $('startBtn').disabled = false;
+        return;
+      }
+
+      // Step 4: Audio level meter
+      setStep(4, 'running', '🔄 Listening for audio... Speak or clap to test your mic.');
+      $('volume-bar').style.display = 'block';
+      let maxLevel = 0;
+      let audioCtx, analyser, animFrame;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        await new Promise((resolve) => {
+          const started = Date.now();
+          const check = () => {
+            analyser.getByteFrequencyData(data);
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) sum += data[i];
+            const avg = sum / data.length;
+            const pct = Math.min(100, Math.round(avg * 2.5));
+            $('volume-fill').style.width = pct + '%';
+            if (pct > maxLevel) maxLevel = pct;
+            $('step4-detail').innerHTML = `🔊 Current level: <strong>${pct}%</strong> | Peak: <strong>${maxLevel}%</strong> — Speak or clap now!`;
+
+            if (Date.now() - started < 4000) {
+              animFrame = requestAnimationFrame(check);
+            } else {
+              resolve();
+            }
+          };
+          check();
+        });
+
+        cancelAnimationFrame(animFrame);
+        audioCtx.close();
+      } catch (e) {
+        console.warn('Audio analyser error:', e);
+      }
+
+      if (maxLevel > 5) {
+        setStep(4, 'pass', `✅ Microphone IS picking up sound. Peak level: <strong>${maxLevel}%</strong>`);
+      } else {
+        setStep(4, 'warn', `⚠️ <span class="fix">Very low or zero audio detected (peak: ${maxLevel}%).</span><br><br>
+          <strong>Possible causes:</strong><br>
+          • Mic is muted in Windows system tray (click the 🔊 speaker icon → check input level)<br>
+          • Wrong microphone selected (Windows Settings → Sound → Input → choose the correct device)<br>
+          • Hardware mic switch is off (some laptops have a physical mic mute key, e.g. F4 on ThinkPads)<br>
+          • Mic is too far away — try speaking louder or closer<br><br>
+          Speech recognition may still work — continuing test...`);
+      }
+
+      // Stop the stream AFTER audio test (don't kill it before speech)
+      stream.getTracks().forEach(t => t.stop());
+
+      // Step 5: Actual speech recognition test
+      setStep(5, 'running', '🔄 Starting speech recognition... <strong>Please say something now</strong> (e.g. "Hello" or "Testing").');
+      $('transcript-box').style.display = 'block';
+      $('transcript-box').textContent = '(waiting for speech...)';
+
+      try {
+        const recognition = new SpeechRec();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'hi-IN';
+        recognition.maxAlternatives = 1;
+
+        let gotResult = false;
+        let finalText = '';
+
+        const timeout = setTimeout(() => {
+          if (!gotResult) {
+            try { recognition.stop(); } catch(e) {}
+            setStep(5, 'warn', `⚠️ <span class="fix">No speech detected within 8 seconds.</span><br><br>
+              <strong>Possible causes:</strong><br>
+              • You didn't speak — try clicking "Retry" and speaking immediately<br>
+              • Mic volume too low (check Step 4 above)<br>
+              • Network issue — Chrome's speech recognition requires an internet connection to Google's servers<br>
+              • Try switching language to English: the browser may not have Hindi speech models installed<br><br>
+              <strong>Network test:</strong> Can you open <a href="https://www.google.com" target="_blank">google.com</a>? Speech recognition sends audio to Google for processing.`);
+            $('transcript-box').textContent = '(no speech detected — try again)';
+            $('startBtn').textContent = 'Retry Diagnostic';
+            $('startBtn').disabled = false;
+          }
+        }, 8000);
+
+        recognition.onresult = (event) => {
+          gotResult = true;
+          let text = '';
+          for (let i = 0; i < event.results.length; i++) {
+            text += event.results[i][0].transcript;
+          }
+          finalText = text;
+          $('transcript-box').textContent = '🗣️ "' + text + '"';
+        };
+
+        recognition.onerror = (event) => {
+          clearTimeout(timeout);
+          const err = event.error;
+          console.warn('Recognition error:', err);
+
+          if (err === 'no-speech') {
+            // Not fatal in continuous mode, but in single-shot it means nothing was heard
+            return;
+          }
+
+          if (err === 'not-allowed') {
+            setStep(5, 'fail', `❌ <span class="fix">Browser blocked speech recognition.</span> This is separate from the microphone permission.<br><br>
+              <strong>Fix:</strong> In Chrome, go to <code>chrome://settings/content/speechRecognition</code> and ensure this site is allowed.`);
+          } else if (err === 'network') {
+            setStep(5, 'fail', `❌ <span class="fix">Network error — Chrome could not reach Google's speech servers.</span><br><br>
+              <strong>Fix:</strong><br>
+              • Check your internet connection<br>
+              • If you're behind a firewall/proxy, it may be blocking <code>*.google.com</code><br>
+              • Try on mobile data as a test`);
+          } else if (err === 'audio-capture') {
+            setStep(5, 'fail', `❌ <span class="fix">Audio capture failed.</span> The mic may have been disconnected or grabbed by another app.<br><br>
+              Close other audio apps and try again.`);
+          } else if (err === 'language-not-supported') {
+            setStep(5, 'warn', `⚠️ Language <code>hi-IN</code> not supported on this device. Retrying with <code>en-IN</code>...`);
+            // Could retry with en-IN here
+          } else {
+            setStep(5, 'fail', `❌ Speech recognition error: <code>${err}</code>`);
+          }
+          $('startBtn').textContent = 'Retry Diagnostic';
+          $('startBtn').disabled = false;
+        };
+
+        recognition.onend = () => {
+          clearTimeout(timeout);
+          if (gotResult && finalText) {
+            setStep(5, 'pass', `✅ Speech recognition WORKING! Detected: <strong>"${finalText}"</strong><br><br>
+              If voice works here but not in the Sahay AI app, the issue is in how the app triggers recognition. Share this result with the developer.`);
+          }
+          $('startBtn').textContent = 'Run Again';
+          $('startBtn').disabled = false;
+        };
+
+        recognition.start();
+      } catch (err) {
+        setStep(5, 'fail', `❌ Failed to start speech recognition: <code>${err.message}</code>`);
+        $('startBtn').textContent = 'Retry Diagnostic';
+        $('startBtn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
