@@ -24,6 +24,20 @@ export function useVoice(currentLanguage: LanguageCode) {
         return 'mr-IN';
       case 'ta':
         return 'ta-IN';
+      case 'bn':
+        return 'bn-IN';
+      case 'te':
+        return 'te-IN';
+      case 'gu':
+        return 'gu-IN';
+      case 'ur':
+        return 'ur-IN';
+      case 'kn':
+        return 'kn-IN';
+      case 'od':
+        return 'or-IN';
+      case 'ml':
+        return 'ml-IN';
       case 'en':
       default:
         return 'en-IN';

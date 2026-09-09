@@ -15,7 +15,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`grid grid-cols-2 gap-3 w-full ${className}`}>
+    <div className={`grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-h-[420px] overflow-y-auto pr-1 ${className}`}>
       {LANGUAGES.map((lang) => {
         const isSelected = selectedLanguage === lang.code;
 

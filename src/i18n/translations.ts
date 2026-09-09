@@ -1,10 +1,19 @@
 import { LanguageCode } from '../types';
+import { bn, te, gu } from './lang_bn';
+import { ur, kn, od, ml } from './lang_ur';
 
 export const LANGUAGES = [
   { code: 'hi' as LanguageCode, name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', greeting: 'नमस्ते' },
-  { code: 'en' as LanguageCode, name: 'English', nativeName: 'English', flag: '🌐', greeting: 'Welcome' },
+  { code: 'bn' as LanguageCode, name: 'Bengali', nativeName: 'বাংলা', flag: '🌸', greeting: 'নমস্কার' },
   { code: 'mr' as LanguageCode, name: 'Marathi', nativeName: 'मराठी', flag: '🚩', greeting: 'नमस्कार' },
-  { code: 'ta' as LanguageCode, name: 'Tamil', nativeName: 'தமிழ்', flag: '🌾', greeting: 'வணக்கம்' },
+  { code: 'te' as LanguageCode, name: 'Telugu', nativeName: 'తెలుగు', flag: '🌾', greeting: 'నమస్కారం' },
+  { code: 'ta' as LanguageCode, name: 'Tamil', nativeName: 'தமிழ்', flag: '🏛️', greeting: 'வணக்கம்' },
+  { code: 'gu' as LanguageCode, name: 'Gujarati', nativeName: 'ગુજરાતી', flag: '🦁', greeting: 'નમસ્તે' },
+  { code: 'ur' as LanguageCode, name: 'Urdu', nativeName: 'اردو', flag: '☪️', greeting: 'آداب' },
+  { code: 'kn' as LanguageCode, name: 'Kannada', nativeName: 'ಕನ್ನಡ', flag: '🐘', greeting: 'ನಮಸ್ಕಾರ' },
+  { code: 'od' as LanguageCode, name: 'Odia', nativeName: 'ଓଡ଼ିଆ', flag: '🛕', greeting: 'ନମସ୍କାର' },
+  { code: 'ml' as LanguageCode, name: 'Malayalam', nativeName: 'മലയാളം', flag: '🌴', greeting: 'നമസ്കാരം' },
+  { code: 'en' as LanguageCode, name: 'English', nativeName: 'English', flag: '🌐', greeting: 'Welcome' },
 ];
 
 export interface TranslationStrings {
@@ -474,4 +483,12 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     saveReceiptButton: 'ரசீதை பதிவிறக்கம் / பகிரவும்',
     startNewButton: 'புதிய விண்ணப்பம் தொடங்கவும்',
   },
+
+  bn,
+  te,
+  gu,
+  ur,
+  kn,
+  od,
+  ml,
 };
