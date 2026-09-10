@@ -1,4 +1,6 @@
-import { Scheme, EMICalculation, PartnerBranch, ApplicationTrackerData } from '../types';
+import { Scheme, EMICalculation, PartnerBranch, ApplicationTrackerData, BeneficiaryProfile } from '../types';
+import { neo4jGraphService } from './neo4jGraphService';
+import { sensitiveStorageService } from './sensitiveStorageService';
 
 // Curated government schemes under Ministry of Social Justice & Empowerment (NBCFDC, NSFDC, NSKFDC)
 const MOCK_SCHEMES: Scheme[] = [
@@ -212,22 +214,67 @@ const MOCK_PARTNERS: PartnerBranch[] = [
 const STORAGE_KEY = 'sahay_ai_application_state';
 
 // Specialist Agent 1: Scheme Matcher Agent
-export async function matchSchemesAgent(needText: string): Promise<Scheme[]> {
+export async function matchSchemesAgent(
+  needInput: string | BeneficiaryProfile
+): Promise<Scheme[]> {
   // Simulate rural network latency (calm, human-timed)
   await new Promise((resolve) => setTimeout(resolve, 1100));
 
-  const textLower = needText.toLowerCase();
+  let matched: Scheme[] = MOCK_SCHEMES;
+  let beneficiaryId: string | null = null;
 
-  // If user mentioned women / female / mahila / dairy / tailor, prioritize matching schemes
-  if (textLower.includes('woman') || textLower.includes('mahila') || textLower.includes('sister') || textLower.includes('mother')) {
-    return [MOCK_SCHEMES[1], MOCK_SCHEMES[0], MOCK_SCHEMES[2]];
-  }
-  if (textLower.includes('machine') || textLower.includes('equipment') || textLower.includes('welding') || textLower.includes('tractor')) {
-    return [MOCK_SCHEMES[2], MOCK_SCHEMES[0], MOCK_SCHEMES[1]];
+  if (typeof needInput === 'object' && needInput !== null && 'identity' in needInput) {
+    const profile = needInput as BeneficiaryProfile;
+    beneficiaryId = profile.id;
+
+    // Evaluate structured profile rules
+    const caste = sensitiveStorageService.getCasteForEligibilityComputation(profile.id);
+    const isFemale = profile.identity.gender === 'female';
+    const isTermLoan = profile.enterprise.loan_type_needed === 'term_loan';
+    const isEducationLoan = profile.enterprise.loan_type_needed === 'education_loan';
+    const isMicro = profile.enterprise.loan_type_needed === 'micro_finance';
+
+    if (isFemale) {
+      // Prioritize women micro-enterprise (NSFDC Mahila Samriddhi)
+      matched = [MOCK_SCHEMES[1], MOCK_SCHEMES[0], MOCK_SCHEMES[2]];
+    } else if (isTermLoan || profile.enterprise.requested_loan_amount > 140000) {
+      // Prioritize Machinery & Term Loan (NBCFDC Term Loan)
+      matched = [MOCK_SCHEMES[2], MOCK_SCHEMES[0], MOCK_SCHEMES[1]];
+    } else {
+      matched = [MOCK_SCHEMES[0], MOCK_SCHEMES[1], MOCK_SCHEMES[2]];
+    }
+
+    // STRICT GRAPH RULE: Emit Neo4j (:User)-[:ELIGIBLE_FOR]->(:Scheme) edges ONLY NOW downstream
+    neo4jGraphService.linkUserToEligibleSchemes(
+      beneficiaryId,
+      matched.map((s) => s.id),
+      `Downstream eligibility evaluated for ${profile.identity.gender}, loan type: ${profile.enterprise.loan_type_needed}, income: ₹${profile.financial.annual_family_income}`
+    );
+  } else {
+    const needText = typeof needInput === 'string' ? needInput : '';
+    const textLower = needText.toLowerCase();
+
+    // If user mentioned women / female / mahila / dairy / tailor, prioritize matching schemes
+    if (
+      textLower.includes('woman') ||
+      textLower.includes('mahila') ||
+      textLower.includes('sister') ||
+      textLower.includes('mother')
+    ) {
+      matched = [MOCK_SCHEMES[1], MOCK_SCHEMES[0], MOCK_SCHEMES[2]];
+    } else if (
+      textLower.includes('machine') ||
+      textLower.includes('equipment') ||
+      textLower.includes('welding') ||
+      textLower.includes('tractor')
+    ) {
+      matched = [MOCK_SCHEMES[2], MOCK_SCHEMES[0], MOCK_SCHEMES[1]];
+    } else {
+      matched = MOCK_SCHEMES;
+    }
   }
 
-  // Default priority order: Micro finance is best for low income
-  return MOCK_SCHEMES;
+  return matched;
 }
 
 // Specialist Agent 2: EMI Calculator Agent

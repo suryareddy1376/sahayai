@@ -5,6 +5,7 @@ import { EMIHeroNumber } from '../components/EMIHeroNumber';
 import { MoratoriumCallout } from '../components/MoratoriumCallout';
 import { ComparisonCards } from '../components/ComparisonCards';
 import { TrustBanner } from '../components/TrustBanner';
+import { getTranslatedSchemes, translateSchemeText } from '../i18n/schemeTranslations';
 import { calculateEMIAgent } from '../services/mockAgentApi';
 
 interface EMICalculatorScreenProps {
@@ -22,12 +23,21 @@ export const EMICalculatorScreen: React.FC<EMICalculatorScreenProps> = ({
   onProceedToPartner,
   onReadAloud,
 }) => {
-  const [activeScheme, setActiveScheme] = useState<Scheme>(scheme);
+  const translatedSchemeA = getTranslatedSchemes([scheme], language)[0];
+  const translatedSchemeB = secondScheme ? getTranslatedSchemes([secondScheme], language)[0] : null;
+
+  const [activeScheme, setActiveScheme] = useState<Scheme>(translatedSchemeA);
   const [amount, setAmount] = useState<number>(Math.min(80000, scheme.maxAmount));
   const [tenure, setTenure] = useState<number>(36);
 
+  React.useEffect(() => {
+    setActiveScheme((prev) => 
+      prev.id === translatedSchemeA.id ? translatedSchemeA : (translatedSchemeB || translatedSchemeA)
+    );
+  }, [language, translatedSchemeA, translatedSchemeB]);
+
   const calcA = calculateEMIAgent(activeScheme, amount, tenure);
-  const calcB = secondScheme ? calculateEMIAgent(secondScheme, amount, tenure) : null;
+  const calcB = translatedSchemeB ? calculateEMIAgent(translatedSchemeB, amount, tenure) : null;
 
   const handleSelectSchemeInCompare = (newScheme: Scheme) => {
     setActiveScheme(newScheme);
@@ -61,11 +71,11 @@ export const EMICalculatorScreen: React.FC<EMICalculatorScreenProps> = ({
       />
 
       {/* Side-by-side comparison cards if 2 schemes are selected */}
-      {secondScheme && calcB && (
+      {translatedSchemeB && calcB && (
         <ComparisonCards
-          schemeA={scheme}
-          calcA={calculateEMIAgent(scheme, amount, tenure)}
-          schemeB={secondScheme}
+          schemeA={translatedSchemeA}
+          calcA={calculateEMIAgent(translatedSchemeA, amount, tenure)}
+          schemeB={translatedSchemeB}
           calcB={calcB}
           selectedSchemeId={activeScheme.id}
           onSelectScheme={handleSelectSchemeInCompare}

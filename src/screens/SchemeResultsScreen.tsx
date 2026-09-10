@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Volume2, ArrowRight, Sparkles, Scale } from 'lucide-react';
-import { Scheme, LanguageCode } from '../types';
+import { Scheme, LanguageCode, BeneficiaryProfile } from '../types';
 import { translations } from '../i18n/translations';
+import { getTranslatedSchemes } from '../i18n/schemeTranslations';
 import { SchemeResultCard } from '../components/SchemeResultCard';
 import { TrustBanner } from '../components/TrustBanner';
 
@@ -11,6 +12,7 @@ interface SchemeResultsScreenProps {
   onSelectScheme: (scheme: Scheme) => void;
   onCompareSchemes: (schemeA: Scheme, schemeB: Scheme) => void;
   onReadAloud: (text: string) => void;
+  beneficiaryProfile?: BeneficiaryProfile | null;
 }
 
 export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
@@ -19,8 +21,10 @@ export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
   onSelectScheme,
   onCompareSchemes,
   onReadAloud,
+  beneficiaryProfile,
 }) => {
   const t = translations[language];
+  const translatedSchemes = getTranslatedSchemes(schemes, language);
   const [selectedForCompareIds, setSelectedForCompareIds] = useState<string[]>([]);
 
   const toggleCompare = (schemeId: string) => {
@@ -42,8 +46,8 @@ export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
 
   const handleStartComparison = () => {
     if (selectedForCompareIds.length === 2) {
-      const schemeA = schemes.find((s) => s.id === selectedForCompareIds[0]);
-      const schemeB = schemes.find((s) => s.id === selectedForCompareIds[1]);
+      const schemeA = translatedSchemes.find((s) => s.id === selectedForCompareIds[0]);
+      const schemeB = translatedSchemes.find((s) => s.id === selectedForCompareIds[1]);
       if (schemeA && schemeB) {
         onCompareSchemes(schemeA, schemeB);
       }
@@ -55,7 +59,7 @@ export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
       <TrustBanner language={language} variant="compact" />
 
       {/* Hero Headline Box */}
-      <div className="bg-linear-to-r from-blue-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-7 shadow-trust space-y-3">
+      <div className="bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-7 shadow-trust space-y-3">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-blue-500/30 text-blue-200 border border-blue-400/30">
             <Sparkles className="w-3.5 h-3.5" />
@@ -80,11 +84,25 @@ export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
         <p className="text-xs sm:text-sm text-blue-200 font-medium">
           Matches your small trade profile with zero collateral requirements.
         </p>
+
+        {beneficiaryProfile && (
+          <div className="mt-3 pt-3 border-t border-white/15 text-xs space-y-1.5 animate-in fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-blue-100 font-bold">
+              <span>👤 Profile: {beneficiaryProfile.identity.full_name} ({beneficiaryProfile.identity.gender})</span>
+              <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-md font-mono text-[10px]">
+                🌿 Neo4j Graph Linked (2 Schemes)
+              </span>
+            </div>
+            <p className="text-slate-300 text-[11px]">
+              Sector: {beneficiaryProfile.enterprise.business_sector} · Loan: ₹{beneficiaryProfile.enterprise.requested_loan_amount.toLocaleString('en-IN')} · PIN: {beneficiaryProfile.location.pincode}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Scheme Cards Stack */}
       <div className="space-y-4">
-        {schemes.map((scheme, idx) => (
+        {translatedSchemes.map((scheme, idx) => (
           <SchemeResultCard
             key={scheme.id}
             scheme={scheme}

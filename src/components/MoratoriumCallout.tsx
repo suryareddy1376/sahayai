@@ -18,7 +18,7 @@ export const MoratoriumCallout: React.FC<MoratoriumCalloutProps> = ({
 
   return (
     <div
-      className={`w-full bg-linear-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden ${className}`}
+      className={`w-full bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden ${className}`}
     >
       <div className="flex items-start gap-4">
         <div className="bg-white/20 p-3 rounded-2xl shrink-0 backdrop-blur-xs">

@@ -11,6 +11,8 @@ import {
   EMICalculation,
   PartnerBranch,
   ApplicationTrackerData,
+  BeneficiaryProfile,
+  BeneficiaryIntakeResponse,
 } from './types';
 import { LANGUAGES } from './i18n/translations';
 import { useVoice } from './hooks/useVoice';
@@ -39,6 +41,9 @@ export function App() {
   const [emiData, setEmiData] = useState<EMICalculation | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<PartnerBranch | null>(null);
   const [submittedApp, setSubmittedApp] = useState<ApplicationTrackerData | null>(null);
+  const [beneficiaryProfile, setBeneficiaryProfile] = useState<BeneficiaryProfile | null>(null);
+  const [intakeResponse, setIntakeResponse] = useState<BeneficiaryIntakeResponse | null>(null);
+  const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>('voice');
 
   const {
     isListening,
@@ -76,11 +81,18 @@ export function App() {
 
   // Flow Handlers
   const handleStartVoiceFromLanding = () => {
+    setIntakeMode('voice');
     setCurrentStep(2);
     startListening();
   };
 
   const handleStartTypeFromLanding = () => {
+    setIntakeMode('voice');
+    setCurrentStep(2);
+  };
+
+  const handleStartIntakeFromLanding = () => {
+    setIntakeMode('form');
     setCurrentStep(2);
   };
 
@@ -89,6 +101,28 @@ export function App() {
     setIsLoadingSchemes(true);
     try {
       const results = await matchSchemesAgent(text);
+      setMatchedSchemes(results);
+      if (results.length > 0) {
+        setSelectedScheme(results[0]);
+      }
+      setCurrentStep(3);
+    } catch (err) {
+      console.error('Scheme match error:', err);
+    } finally {
+      setIsLoadingSchemes(false);
+    }
+  };
+
+  const handleBeneficiaryIntakeComplete = async (response: BeneficiaryIntakeResponse) => {
+    setIntakeResponse(response);
+    setBeneficiaryProfile(response.beneficiary);
+    setUserNeedText(
+      `${response.beneficiary.enterprise.business_sector} loan of ₹${response.beneficiary.enterprise.requested_loan_amount}`
+    );
+    setIsLoadingSchemes(true);
+    try {
+      // Passes structured profile to downstream scheme matching agent
+      const results = await matchSchemesAgent(response.beneficiary);
       setMatchedSchemes(results);
       if (results.length > 0) {
         setSelectedScheme(results[0]);
@@ -136,6 +170,8 @@ export function App() {
     setEmiData(null);
     setSelectedPartner(null);
     setSubmittedApp(null);
+    setBeneficiaryProfile(null);
+    setIntakeResponse(null);
     stopSpeaking();
   };
 
@@ -216,6 +252,7 @@ export function App() {
             onSelectLanguage={setLanguage}
             onStartVoice={handleStartVoiceFromLanding}
             onStartType={handleStartTypeFromLanding}
+            onStartIntake={handleStartIntakeFromLanding}
           />
         )}
 
@@ -237,6 +274,8 @@ export function App() {
             onSubmitNeed={handleSubmitNeed}
             isLoading={isLoadingSchemes}
             onReadAloudTranscript={() => transcript && speakText(transcript)}
+            onBeneficiaryIntakeComplete={handleBeneficiaryIntakeComplete}
+            initialIntakeMode={intakeMode}
           />
         )}
 
@@ -247,6 +286,7 @@ export function App() {
             onSelectScheme={handleSelectSchemeForEMI}
             onCompareSchemes={handleCompareSchemes}
             onReadAloud={(text) => speakText(text)}
+            beneficiaryProfile={beneficiaryProfile}
           />
         )}
 

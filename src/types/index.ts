@@ -79,3 +79,5 @@ export interface ApplicationTrackerData {
   notifyPhone: string;
   notifyWhatsApp: boolean;
 }
+
+export * from './beneficiary';

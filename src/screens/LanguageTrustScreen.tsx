@@ -10,6 +10,7 @@ interface LanguageTrustScreenProps {
   onSelectLanguage: (lang: LanguageCode) => void;
   onStartVoice: () => void;
   onStartType: () => void;
+  onStartIntake?: () => void;
 }
 
 export const LanguageTrustScreen: React.FC<LanguageTrustScreenProps> = ({
@@ -17,6 +18,7 @@ export const LanguageTrustScreen: React.FC<LanguageTrustScreenProps> = ({
   onSelectLanguage,
   onStartVoice,
   onStartType,
+  onStartIntake,
 }) => {
   const t = translations[language];
 
@@ -81,16 +83,28 @@ export const LanguageTrustScreen: React.FC<LanguageTrustScreenProps> = ({
           </span>
         </div>
 
-        {/* Secondary: Type instead link */}
-        <div className="pt-3 border-t border-slate-100">
+        {/* Secondary: Type instead link + Direct Intake Form button */}
+        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-2">
           <button
             type="button"
             onClick={onStartType}
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors p-2 cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors p-2 cursor-pointer"
           >
             <Keyboard className="w-4 h-4" />
             <span>{t.typeInstead}</span>
           </button>
+          {onStartIntake && (
+            <>
+              <span className="hidden sm:inline text-slate-300">·</span>
+              <button
+                type="button"
+                onClick={onStartIntake}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer"
+              >
+                <span>📋 Complete Beneficiary Intake Form</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

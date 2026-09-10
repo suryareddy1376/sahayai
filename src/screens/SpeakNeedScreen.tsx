@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Keyboard, Search } from 'lucide-react';
-import { LanguageCode } from '../types';
+import { ArrowRight, Sparkles, Keyboard, Search, UserCheck, Mic } from 'lucide-react';
+import { LanguageCode, BeneficiaryIntakeResponse } from '../types';
 import { translations } from '../i18n/translations';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { TrustBanner } from '../components/TrustBanner';
+import { BeneficiaryIntakeForm } from '../components/BeneficiaryIntakeForm';
 
 interface SpeakNeedScreenProps {
   language: LanguageCode;
@@ -16,6 +17,8 @@ interface SpeakNeedScreenProps {
   onSubmitNeed: (needText: string) => void;
   isLoading: boolean;
   onReadAloudTranscript?: () => void;
+  onBeneficiaryIntakeComplete?: (response: BeneficiaryIntakeResponse) => void;
+  initialIntakeMode?: 'voice' | 'form';
 }
 
 export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
@@ -29,8 +32,11 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   onSubmitNeed,
   isLoading,
   onReadAloudTranscript,
+  onBeneficiaryIntakeComplete,
+  initialIntakeMode = 'voice',
 }) => {
   const t = translations[language];
+  const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>(initialIntakeMode);
   const [showTypeInput, setShowTypeInput] = useState(false);
   const [typedText, setTypedText] = useState('');
 
@@ -89,30 +95,72 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   const activeText = typedText || transcript;
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-12">
+    <div className="w-full max-w-2xl mx-auto space-y-6 pt-2 pb-12">
       <TrustBanner language={language} variant="compact" />
 
-      {/* Hero Title */}
-      <div className="text-center space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-          {t.step2}
-        </h1>
-        <p className="text-slate-600 font-medium text-sm sm:text-base">
-          {t.speakPrompt}
-        </p>
+      {/* Mode Switcher: Voice Discovery vs Full Beneficiary Profile */}
+      <div className="flex p-1 bg-slate-200/80 rounded-2xl max-w-sm mx-auto">
+        <button
+          type="button"
+          onClick={() => setIntakeMode('voice')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            intakeMode === 'voice'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Mic className="w-3.5 h-3.5" />
+          <span>Voice Discovery</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIntakeMode('form')}
+          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            intakeMode === 'form'
+              ? 'bg-white text-blue-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+          <span>Beneficiary Profile</span>
+        </button>
       </div>
 
-      {/* Large Voice Action Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 flex flex-col items-center">
-        <VoiceInputButton
-          isListening={isListening}
-          onToggleListening={onToggleListening}
-          transcript={activeText}
+      {intakeMode === 'form' ? (
+        <BeneficiaryIntakeForm
           language={language}
-          errorMessage={errorMessage}
-          onReadAloudTranscript={onReadAloudTranscript}
-          audioLevel={audioLevel}
+          initialNeedText={activeText}
+          onIntakeComplete={(res) => {
+            if (onBeneficiaryIntakeComplete) {
+              onBeneficiaryIntakeComplete(res);
+            } else {
+              onSubmitNeed(res.beneficiary.identity.full_name);
+            }
+          }}
         />
+      ) : (
+        <>
+          {/* Hero Title */}
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
+              {t.step2}
+            </h1>
+            <p className="text-slate-600 font-medium text-sm sm:text-base">
+              {t.speakPrompt}
+            </p>
+          </div>
+
+          {/* Large Voice Action Card */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 flex flex-col items-center">
+            <VoiceInputButton
+              isListening={isListening}
+              onToggleListening={onToggleListening}
+              transcript={activeText}
+              language={language}
+              errorMessage={errorMessage}
+              onReadAloudTranscript={onReadAloudTranscript}
+              audioLevel={audioLevel}
+            />
 
         {/* Windows / Browser Troubleshooting Accordion */}
         <div className="mt-3 w-full">
@@ -195,8 +243,33 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
               </span>
             </button>
           ))}
+          </div>
         </div>
-      </div>
-    </div>
-  );
+
+        {/* SIH 26092 Beneficiary Profile Intake Direct CTA */}
+        <div className="bg-blue-50/80 border border-blue-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+              Beneficiary Intake (SIH 26092)
+            </span>
+            <h4 className="text-sm font-black text-slate-900">
+              Want exact subsidy & quota calculations?
+            </h4>
+            <p className="text-xs text-slate-600 font-medium">
+              Complete the 6-group profile (Identity, Location, Financial, Enterprise, Documents).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIntakeMode('form')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>Open Profile Form</span>
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+);
 };
