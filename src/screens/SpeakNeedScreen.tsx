@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Keyboard, Search, UserCheck, Mic } from 'lucide-react';
+import { ArrowRight, Sparkles, Keyboard, Search, UserCheck, Mic, X } from 'lucide-react';
 import { LanguageCode, BeneficiaryIntakeResponse } from '../types';
 import { translations } from '../i18n/translations';
 import { VoiceInputButton } from '../components/VoiceInputButton';
@@ -38,14 +38,14 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   const t = translations[language];
   const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>(initialIntakeMode);
   const [showTypeInput, setShowTypeInput] = useState(false);
-  const [typedText, setTypedText] = useState('');
+  const [queryText, setQueryText] = useState(transcript || '');
 
-  // Sync typed text with transcript
+  // Sync incoming voice transcript into queryText only while voice is actively listening
   useEffect(() => {
-    if (transcript) {
-      setTypedText(transcript);
+    if (isListening && transcript) {
+      setQueryText(transcript);
     }
-  }, [transcript]);
+  }, [transcript, isListening]);
 
   const examplePrompts = [
     t.promptTailor,
@@ -55,15 +55,27 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   ];
 
   const handleSelectPrompt = (prompt: string) => {
+    if (isListening) {
+      onToggleListening();
+    }
+    setQueryText(prompt);
     onSetTranscript(prompt);
-    setTypedText(prompt);
+    setShowTypeInput(true);
+  };
+
+  const handleClear = () => {
+    setQueryText('');
+    onSetTranscript('');
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalNeed = typedText || transcript;
-    if (finalNeed.trim()) {
-      onSubmitNeed(finalNeed.trim());
+    if (isListening) {
+      onToggleListening();
+    }
+    const finalNeed = queryText.trim();
+    if (finalNeed) {
+      onSubmitNeed(finalNeed);
     }
   };
 
@@ -92,7 +104,7 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
     );
   }
 
-  const activeText = typedText || transcript;
+  const activeText = queryText;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 pt-2 pb-12">
@@ -183,25 +195,59 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
           {!showTypeInput ? (
             <button
               type="button"
-              onClick={() => setShowTypeInput(true)}
-              className="text-xs sm:text-sm font-bold text-slate-500 hover:text-blue-600 flex items-center justify-center gap-1.5 mx-auto py-2 cursor-pointer"
+              onClick={() => {
+                setShowTypeInput(true);
+                if (isListening) {
+                  onToggleListening();
+                }
+              }}
+              className="text-xs sm:text-sm font-bold text-slate-500 hover:text-blue-600 flex items-center justify-center gap-1.5 mx-auto py-2 cursor-pointer transition-colors"
             >
               <Keyboard className="w-4 h-4" />
               <span>{t.typeInstead}</span>
             </button>
           ) : (
-            <form onSubmit={handleFormSubmit} className="mt-3 space-y-3">
+            <form onSubmit={handleFormSubmit} className="mt-3 space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <Keyboard className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{t.typeInstead}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowTypeInput(false)}
+                  className="text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  Hide
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
-                  value={typedText}
+                  value={queryText}
+                  onFocus={() => {
+                    if (isListening) {
+                      onToggleListening();
+                    }
+                  }}
                   onChange={(e) => {
-                    setTypedText(e.target.value);
-                    onSetTranscript(e.target.value);
+                    const val = e.target.value;
+                    setQueryText(val);
+                    onSetTranscript(val);
                   }}
                   placeholder="e.g. सिलाई मशीन और दुकान के लिए ₹80,000"
-                  className="w-full px-4 py-3.5 rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-hidden text-base font-medium"
+                  className="w-full pl-4 pr-10 py-3.5 rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-hidden text-base font-medium transition-colors"
                 />
+                {queryText.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                    aria-label="Clear query text"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </form>
           )}
@@ -210,8 +256,13 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
         {/* Submit Button if text is available */}
         {activeText.trim().length > 0 && (
           <button
-            type="button"
-            onClick={() => onSubmitNeed(activeText)}
+            type="submit"
+            onClick={() => {
+              if (isListening) {
+                onToggleListening();
+              }
+              onSubmitNeed(activeText.trim());
+            }}
             className="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-6 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-base sm:text-lg cursor-pointer active:scale-98 animate-in fade-in zoom-in-95"
           >
             <Search className="w-5 h-5 stroke-[2.5]" />

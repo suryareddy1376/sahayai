@@ -17,6 +17,7 @@ export function useVoice(currentLanguage: LanguageCode) {
   const recognitionRef = useRef<any>(null);
   const isListeningIntentRef = useRef<boolean>(false);
   const restartCountRef = useRef<number>(0);
+  const restartTimeoutRef = useRef<any>(null);
 
   // Map app language code to BCP 47 language tag
   const getLanguageTag = useCallback((lang: LanguageCode): string => {
@@ -52,6 +53,10 @@ export function useVoice(currentLanguage: LanguageCode) {
   useEffect(() => {
     return () => {
       isListeningIntentRef.current = false;
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current);
+        restartTimeoutRef.current = null;
+      }
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch (e) { /* ignore */ }
         recognitionRef.current = null;
@@ -70,6 +75,11 @@ export function useVoice(currentLanguage: LanguageCode) {
   const stopListening = useCallback(() => {
     isListeningIntentRef.current = false;
     restartCountRef.current = 0;
+
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+      restartTimeoutRef.current = null;
+    }
 
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) { /* ignore */ }
@@ -177,7 +187,7 @@ export function useVoice(currentLanguage: LanguageCode) {
           restartCountRef.current++;
           console.log('[Sahay Voice] Auto-restarting (attempt', restartCountRef.current, ')');
 
-          setTimeout(() => {
+          restartTimeoutRef.current = setTimeout(() => {
             if (!isListeningIntentRef.current) return;
 
             try {

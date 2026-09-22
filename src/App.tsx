@@ -103,6 +103,7 @@ export function App() {
   };
 
   const handleSubmitNeed = async (text: string) => {
+    stopListening();
     setUserNeedText(text);
     setIsLoadingSchemes(true);
     try {
@@ -189,6 +190,47 @@ export function App() {
     }
   };
 
+  const handleFindSchemesFromDashboard = async () => {
+    let needQuery = 'Government scheme financial support';
+    if (beneficiaryProfile) {
+      const parts: string[] = [];
+      if (beneficiaryProfile.identity?.gender === 'female') {
+        parts.push('woman entrepreneur');
+      }
+      if (beneficiaryProfile.enterprise?.business_sector) {
+        parts.push(beneficiaryProfile.enterprise.business_sector);
+      }
+      if (beneficiaryProfile.enterprise?.loan_type_needed) {
+        parts.push(beneficiaryProfile.enterprise.loan_type_needed.replace('_', ' '));
+      }
+      if (beneficiaryProfile.enterprise?.requested_loan_amount) {
+        parts.push(`loan of ₹${beneficiaryProfile.enterprise.requested_loan_amount}`);
+      }
+      if (parts.length > 0) {
+        needQuery = parts.join(' ');
+      }
+    }
+
+    setUserNeedText(needQuery);
+    setIsLoadingSchemes(true);
+
+    try {
+      const results = await matchSchemesAgent(needQuery);
+      setMatchedSchemes(results);
+      if (results.length > 0) {
+        setSelectedScheme(results[0]);
+      }
+      setCurrentStep(3);
+      setAppStage('existing-flow');
+    } catch (err) {
+      console.error('Scheme match error:', err);
+      setCurrentStep(3);
+      setAppStage('existing-flow');
+    } finally {
+      setIsLoadingSchemes(false);
+    }
+  };
+
   // Outer Flow Stage Renderers
   if (appStage === 'auth') {
     return (
@@ -228,10 +270,7 @@ export function App() {
             setIntakeResponse(null);
             setAppStage('auth');
           }}
-          onFindSchemes={() => {
-            setCurrentStep(1);
-            setAppStage('existing-flow');
-          }}
+          onFindSchemes={handleFindSchemesFromDashboard}
           onEMICalculator={() => {
             setCurrentStep(1);
             setAppStage('existing-flow');
