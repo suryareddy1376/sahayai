@@ -20,6 +20,9 @@ import { matchSchemesAgent, submitApplication, getCachedApplication } from './se
 import { ProgressStepper } from './components/ProgressStepper';
 
 // Screens
+import { AuthenticationScreen } from './screens/AuthenticationScreen';
+import { ProfileSetupScreen } from './screens/ProfileSetupScreen';
+import { DashboardScreen } from './screens/DashboardScreen';
 import { LanguageTrustScreen } from './screens/LanguageTrustScreen';
 import { SpeakNeedScreen } from './screens/SpeakNeedScreen';
 import { SchemeResultsScreen } from './screens/SchemeResultsScreen';
@@ -27,7 +30,10 @@ import { EMICalculatorScreen } from './screens/EMICalculatorScreen';
 import { PartnerLocatorScreen } from './screens/PartnerLocatorScreen';
 import { ConfirmationTrackerScreen } from './screens/ConfirmationTrackerScreen';
 
+type AppStage = 'auth' | 'profile' | 'dashboard' | 'existing-flow';
+
 export function App() {
+  const [appStage, setAppStage] = useState<AppStage>('auth');
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [language, setLanguage] = useState<LanguageCode>('hi'); // Default Hindi for target audience
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
@@ -182,6 +188,66 @@ export function App() {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  // Outer Flow Stage Renderers
+  if (appStage === 'auth') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
+        <AuthenticationScreen
+          onAuthenticated={() => setAppStage('profile')}
+        />
+      </div>
+    );
+  }
+
+  if (appStage === 'profile') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
+        <ProfileSetupScreen
+          language={language}
+          onProfileComplete={(response) => {
+            setIntakeResponse(response);
+            setBeneficiaryProfile(response.beneficiary);
+            setAppStage('dashboard');
+          }}
+          onBack={() => setAppStage('auth')}
+        />
+      </div>
+    );
+  }
+
+  if (appStage === 'dashboard') {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
+        <DashboardScreen
+          profile={beneficiaryProfile}
+          language={language}
+          onEditProfile={() => setAppStage('profile')}
+          onLogout={() => {
+            setBeneficiaryProfile(null);
+            setIntakeResponse(null);
+            setAppStage('auth');
+          }}
+          onFindSchemes={() => {
+            setCurrentStep(1);
+            setAppStage('existing-flow');
+          }}
+          onEMICalculator={() => {
+            setCurrentStep(1);
+            setAppStage('existing-flow');
+          }}
+          onPartnerLocator={() => {
+            setCurrentStep(1);
+            setAppStage('existing-flow');
+          }}
+          onApplicationTracker={() => {
+            setCurrentStep(1);
+            setAppStage('existing-flow');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
