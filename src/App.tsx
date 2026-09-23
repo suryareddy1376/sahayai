@@ -14,6 +14,7 @@ import {
   ApplicationTrackerData,
   BeneficiaryProfile,
   BeneficiaryIntakeResponse,
+  MultimodalQuery,
 } from './types';
 import { LANGUAGES } from './i18n/translations';
 import { useVoice } from './hooks/useVoice';
@@ -56,6 +57,7 @@ export function App() {
   const [beneficiaryProfile, setBeneficiaryProfile] = useState<BeneficiaryProfile | null>(null);
   const [intakeResponse, setIntakeResponse] = useState<BeneficiaryIntakeResponse | null>(null);
   const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>('voice');
+  const [activeQuery, setActiveQuery] = useState<MultimodalQuery | null>(null);
 
   const {
     isListening,
@@ -108,12 +110,18 @@ export function App() {
     setCurrentStep(2);
   };
 
-  const handleSubmitNeed = async (text: string) => {
+  const handleSubmitNeed = async (query: MultimodalQuery) => {
     stopListening();
-    setUserNeedText(text);
+    setActiveQuery(query);
+
+    const effectiveSearchText =
+      query.text.trim() ||
+      `Attachment application: ${query.attachments.map((a) => a.name).join(', ')}`;
+
+    setUserNeedText(effectiveSearchText);
     setIsLoadingSchemes(true);
     try {
-      const results = await matchSchemesAgent(beneficiaryProfile || text);
+      const results = await matchSchemesAgent(beneficiaryProfile || effectiveSearchText);
       setMatchedSchemes(results);
       if (results.length > 0) {
         setSelectedScheme(results[0]);
@@ -176,6 +184,7 @@ export function App() {
 
   const handleStartNewApplication = () => {
     setUserNeedText('');
+    setActiveQuery(null);
     resetTranscript();
     setSelectedScheme(null);
     setCompareScheme(null);

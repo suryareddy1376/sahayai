@@ -80,4 +80,19 @@ export interface ApplicationTrackerData {
   notifyWhatsApp: boolean;
 }
 
+export interface QueryAttachment {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  type: 'image' | 'document';
+  mimeType: string;
+}
+
+export interface MultimodalQuery {
+  text: string;
+  source: 'voice' | 'text' | 'mixed';
+  attachments: QueryAttachment[];
+  timestamp: string;
+}
+
 export * from './beneficiary';

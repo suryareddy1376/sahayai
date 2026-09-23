@@ -11,7 +11,7 @@ import {
   FileText,
   Paperclip,
 } from 'lucide-react';
-import { LanguageCode, BeneficiaryIntakeResponse } from '../types';
+import { LanguageCode, BeneficiaryIntakeResponse, MultimodalQuery, QueryAttachment } from '../types';
 import { translations } from '../i18n/translations';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { TrustBanner } from '../components/TrustBanner';
@@ -25,7 +25,7 @@ interface SpeakNeedScreenProps {
   errorMessage?: string | null;
   onToggleListening: () => void;
   onSetTranscript: (text: string) => void;
-  onSubmitNeed: (needText: string) => void;
+  onSubmitNeed: (query: MultimodalQuery) => void;
   isLoading: boolean;
   onReadAloudTranscript?: () => void;
   onBeneficiaryIntakeComplete?: (response: BeneficiaryIntakeResponse) => void;
@@ -64,6 +64,8 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>(initialIntakeMode);
   const [showTypeInput, setShowTypeInput] = useState(false);
   const [queryText, setQueryText] = useState(transcript || '');
+  const [hasVoiceInput, setHasVoiceInput] = useState(false);
+  const [hasTypedInput, setHasTypedInput] = useState(false);
 
   // Multi-Modal Attachments State (Phase 2A - frontend state only)
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
@@ -87,6 +89,7 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   useEffect(() => {
     if (isListening && transcript) {
       setQueryText(transcript);
+      setHasVoiceInput(true);
     }
   }, [transcript, isListening]);
 
@@ -146,26 +149,56 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
     }
     setQueryText(prompt);
     onSetTranscript(prompt);
+    setHasTypedInput(true);
     setShowTypeInput(true);
   };
 
   const handleClear = () => {
     setQueryText('');
     onSetTranscript('');
+    setHasVoiceInput(false);
+    setHasTypedInput(false);
   };
 
   const handleFinalSubmit = () => {
     if (isListening) {
       onToggleListening();
     }
-    const finalNeed = queryText.trim();
-    if (finalNeed) {
-      onSubmitNeed(finalNeed);
-    } else if (attachments.length > 0) {
-      // Honest fallback describing the attached files for downstream search
-      const attachedSummary = attachments.map((a) => a.file.name).join(', ');
-      onSubmitNeed(`Attachment application: ${attachedSummary}`);
+
+    const trimmedText = queryText.trim();
+    if (!trimmedText && attachments.length === 0) {
+      return;
     }
+
+    let source: 'voice' | 'text' | 'mixed' = 'text';
+    if (hasVoiceInput && hasTypedInput) {
+      source = 'mixed';
+    } else if (hasVoiceInput && !hasTypedInput) {
+      source = 'voice';
+    } else {
+      source = 'text';
+    }
+
+    const queryAttachments: QueryAttachment[] = attachments.map((att) => ({
+      id: att.id,
+      name: att.file.name,
+      sizeBytes: att.file.size,
+      type: att.type,
+      mimeType: att.file.type,
+    }));
+
+    const finalText =
+      trimmedText ||
+      `Attachment application: ${attachments.map((a) => a.file.name).join(', ')}`;
+
+    const queryPayload: MultimodalQuery = {
+      text: finalText,
+      source,
+      attachments: queryAttachments,
+      timestamp: new Date().toISOString(),
+    };
+
+    onSubmitNeed(queryPayload);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -240,7 +273,12 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
             if (onBeneficiaryIntakeComplete) {
               onBeneficiaryIntakeComplete(res);
             } else {
-              onSubmitNeed(res.beneficiary.identity.full_name);
+              onSubmitNeed({
+                text: res.beneficiary.identity.full_name,
+                source: 'text',
+                attachments: [],
+                timestamp: new Date().toISOString(),
+              });
             }
           }}
         />
@@ -369,6 +407,7 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
                     const val = e.target.value;
                     setQueryText(val);
                     onSetTranscript(val);
+                    setHasTypedInput(true);
                   }}
                   placeholder="e.g. सिलाई मशीन और दुकान के लिए ₹80,000"
                   className="w-full pl-4 pr-10 py-3.5 rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-hidden text-base font-medium transition-colors"
