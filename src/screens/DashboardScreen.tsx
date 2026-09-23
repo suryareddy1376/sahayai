@@ -9,6 +9,7 @@ import {
   Edit3,
   ArrowRight,
   CheckCircle2,
+  Mic,
 } from 'lucide-react';
 import { BeneficiaryProfile, LanguageCode } from '../types';
 
@@ -224,8 +225,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             type="button"
             onClick={onFindSchemes}
             className="w-full sm:w-auto bg-white hover:bg-slate-100 text-blue-900 font-black py-3.5 px-6 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer shrink-0 active:scale-98"
+            title="Open Voice and Text Query input to describe your livelihood need"
           >
-            <span>Find Schemes</span>
+            <Mic className="w-4 h-4 text-blue-600" />
+            <span>Speak or Search Need</span>
             <ArrowRight className="w-4 h-4 text-blue-600" />
           </button>
         </div>

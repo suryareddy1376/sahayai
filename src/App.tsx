@@ -4,6 +4,7 @@ import {
   Globe,
   WifiOff,
   HelpCircle,
+  LayoutDashboard,
 } from 'lucide-react';
 import {
   LanguageCode,
@@ -16,7 +17,12 @@ import {
 } from './types';
 import { LANGUAGES } from './i18n/translations';
 import { useVoice } from './hooks/useVoice';
-import { matchSchemesAgent, submitApplication, getCachedApplication } from './services/mockAgentApi';
+import {
+  matchSchemesAgent,
+  calculateEMIAgent,
+  submitApplication,
+  getCachedApplication,
+} from './services/mockAgentApi';
 import { ProgressStepper } from './components/ProgressStepper';
 
 // Screens
@@ -107,7 +113,7 @@ export function App() {
     setUserNeedText(text);
     setIsLoadingSchemes(true);
     try {
-      const results = await matchSchemesAgent(text);
+      const results = await matchSchemesAgent(beneficiaryProfile || text);
       setMatchedSchemes(results);
       if (results.length > 0) {
         setSelectedScheme(results[0]);
@@ -169,7 +175,6 @@ export function App() {
   };
 
   const handleStartNewApplication = () => {
-    setCurrentStep(1);
     setUserNeedText('');
     resetTranscript();
     setSelectedScheme(null);
@@ -177,58 +182,120 @@ export function App() {
     setEmiData(null);
     setSelectedPartner(null);
     setSubmittedApp(null);
-    setBeneficiaryProfile(null);
-    setIntakeResponse(null);
     stopSpeaking();
+    if (beneficiaryProfile) {
+      setAppStage('dashboard');
+    } else {
+      setCurrentStep(1);
+    }
   };
 
   const handleGoBack = () => {
     stopSpeaking();
     stopListening();
+    if (beneficiaryProfile && (currentStep === 1 || currentStep === 2)) {
+      setAppStage('dashboard');
+      return;
+    }
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else if (beneficiaryProfile) {
+      setAppStage('dashboard');
     }
   };
 
-  const handleFindSchemesFromDashboard = async () => {
-    let needQuery = 'Government scheme financial support';
-    if (beneficiaryProfile) {
-      const parts: string[] = [];
-      if (beneficiaryProfile.identity?.gender === 'female') {
-        parts.push('woman entrepreneur');
-      }
-      if (beneficiaryProfile.enterprise?.business_sector) {
-        parts.push(beneficiaryProfile.enterprise.business_sector);
-      }
-      if (beneficiaryProfile.enterprise?.loan_type_needed) {
-        parts.push(beneficiaryProfile.enterprise.loan_type_needed.replace('_', ' '));
-      }
-      if (beneficiaryProfile.enterprise?.requested_loan_amount) {
-        parts.push(`loan of ₹${beneficiaryProfile.enterprise.requested_loan_amount}`);
-      }
-      if (parts.length > 0) {
-        needQuery = parts.join(' ');
-      }
+  // Helper to extract a search query string from active beneficiary profile
+  const getProfileNeedQuery = () => {
+    if (!beneficiaryProfile) return 'Government scheme financial support';
+    const parts: string[] = [];
+    if (beneficiaryProfile.identity?.gender === 'female') {
+      parts.push('woman entrepreneur');
     }
+    if (beneficiaryProfile.enterprise?.business_sector) {
+      parts.push(beneficiaryProfile.enterprise.business_sector);
+    }
+    if (beneficiaryProfile.enterprise?.loan_type_needed) {
+      parts.push(beneficiaryProfile.enterprise.loan_type_needed.replace('_', ' '));
+    }
+    if (beneficiaryProfile.enterprise?.requested_loan_amount) {
+      parts.push(`loan of ₹${beneficiaryProfile.enterprise.requested_loan_amount.toLocaleString('en-IN')}`);
+    }
+    return parts.length > 0 ? parts.join(' ') : 'Government scheme financial support';
+  };
 
+  // 1. Multi-Modal Discovery Flow (Voice / Text Need Input)
+  const handleFindSchemesFromDashboard = () => {
+    const needQuery = getProfileNeedQuery();
     setUserNeedText(needQuery);
-    setIsLoadingSchemes(true);
+    setTranscript(needQuery);
+    setIntakeMode('voice');
+    setCurrentStep(2);
+    setAppStage('existing-flow');
+  };
 
-    try {
-      const results = await matchSchemesAgent(needQuery);
-      setMatchedSchemes(results);
-      if (results.length > 0) {
-        setSelectedScheme(results[0]);
+  // 2. Direct Navigation to EMI Calculator
+  const handleOpenEMICalculator = async () => {
+    if (!selectedScheme && beneficiaryProfile) {
+      setIsLoadingSchemes(true);
+      try {
+        const results = await matchSchemesAgent(beneficiaryProfile);
+        setMatchedSchemes(results);
+        if (results.length > 0) {
+          setSelectedScheme(results[0]);
+        }
+      } catch (err) {
+        console.error('Error loading schemes for EMI calculator:', err);
+      } finally {
+        setIsLoadingSchemes(false);
       }
-      setCurrentStep(3);
-      setAppStage('existing-flow');
-    } catch (err) {
-      console.error('Scheme match error:', err);
-      setCurrentStep(3);
-      setAppStage('existing-flow');
-    } finally {
-      setIsLoadingSchemes(false);
     }
+    setCurrentStep(4);
+    setAppStage('existing-flow');
+  };
+
+  // 3. Direct Navigation to Partner Locator
+  const handleOpenPartnerLocator = async () => {
+    let schemeToUse = selectedScheme;
+
+    if (!schemeToUse && beneficiaryProfile) {
+      setIsLoadingSchemes(true);
+      try {
+        const results = await matchSchemesAgent(beneficiaryProfile);
+        setMatchedSchemes(results);
+        if (results.length > 0) {
+          schemeToUse = results[0];
+          setSelectedScheme(results[0]);
+        }
+      } catch (err) {
+        console.error('Error loading schemes for partner locator:', err);
+      } finally {
+        setIsLoadingSchemes(false);
+      }
+    }
+
+    if (schemeToUse && !emiData && beneficiaryProfile?.enterprise?.requested_loan_amount) {
+      const calc = calculateEMIAgent(
+        schemeToUse,
+        beneficiaryProfile.enterprise.requested_loan_amount,
+        schemeToUse.standardTenureMonths
+      );
+      setEmiData(calc);
+    }
+
+    setCurrentStep(5);
+    setAppStage('existing-flow');
+  };
+
+  // 4. Direct Navigation to Application Tracker (Shows existing or empty state; never invents data)
+  const handleOpenApplicationTracker = () => {
+    if (!submittedApp) {
+      const cached = getCachedApplication();
+      if (cached) {
+        setSubmittedApp(cached);
+      }
+    }
+    setCurrentStep(6);
+    setAppStage('existing-flow');
   };
 
   // Outer Flow Stage Renderers
@@ -271,18 +338,9 @@ export function App() {
             setAppStage('auth');
           }}
           onFindSchemes={handleFindSchemesFromDashboard}
-          onEMICalculator={() => {
-            setCurrentStep(1);
-            setAppStage('existing-flow');
-          }}
-          onPartnerLocator={() => {
-            setCurrentStep(1);
-            setAppStage('existing-flow');
-          }}
-          onApplicationTracker={() => {
-            setCurrentStep(1);
-            setAppStage('existing-flow');
-          }}
+          onEMICalculator={handleOpenEMICalculator}
+          onPartnerLocator={handleOpenPartnerLocator}
+          onApplicationTracker={handleOpenApplicationTracker}
         />
       </div>
     );
@@ -301,6 +359,23 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Quick return to Dashboard if user is profiled */}
+            {beneficiaryProfile && (
+              <button
+                type="button"
+                onClick={() => {
+                  stopSpeaking();
+                  stopListening();
+                  setAppStage('dashboard');
+                }}
+                className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                title="Return to Dashboard"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-blue-600" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </button>
+            )}
+
             {/* Audio speaking indicator */}
             {isSpeaking && (
               <button
@@ -338,7 +413,7 @@ export function App() {
         totalSteps={6}
         language={language}
         onBack={handleGoBack}
-        canGoBack={currentStep > 1 && currentStep < 6}
+        canGoBack={(currentStep > 1 && currentStep < 6) || (Boolean(beneficiaryProfile) && currentStep < 6)}
       />
 
       {/* Offline Alert Banner if rural network drops */}
@@ -395,31 +470,130 @@ export function App() {
           />
         )}
 
-        {currentStep === 4 && selectedScheme && (
-          <EMICalculatorScreen
-            scheme={selectedScheme}
-            secondScheme={compareScheme}
-            language={language}
-            onProceedToPartner={handleProceedToPartner}
-            onReadAloud={(text) => speakText(text)}
-          />
+        {currentStep === 4 && (
+          selectedScheme ? (
+            <EMICalculatorScreen
+              scheme={selectedScheme}
+              secondScheme={compareScheme}
+              language={language}
+              onProceedToPartner={handleProceedToPartner}
+              onReadAloud={(text) => speakText(text)}
+            />
+          ) : (
+            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
+                  🧮
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    No Scheme Selected for EMI Calculation
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
+                    Please search or match eligible schemes first to estimate monthly installments and moratorium terms.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (beneficiaryProfile) {
+                        handleFindSchemesFromDashboard();
+                      } else {
+                        setCurrentStep(2);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                  >
+                    <span>Speak or Search Need</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
         )}
 
-        {currentStep === 5 && selectedScheme && emiData && (
-          <PartnerLocatorScreen
-            scheme={selectedScheme}
-            calculation={emiData}
-            language={language}
-            onConfirmPartner={handleConfirmPartner}
-          />
+        {currentStep === 5 && (
+          selectedScheme && emiData ? (
+            <PartnerLocatorScreen
+              scheme={selectedScheme}
+              calculation={emiData}
+              language={language}
+              onConfirmPartner={handleConfirmPartner}
+            />
+          ) : (
+            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
+                  📍
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Select a Scheme to Locate Partners
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
+                    Partner banks and channel agencies are assigned based on the specific scheme and loan amount needed.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (beneficiaryProfile) {
+                        handleFindSchemesFromDashboard();
+                      } else {
+                        setCurrentStep(2);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                  >
+                    <span>Speak or Search Need</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
         )}
 
-        {currentStep === 6 && submittedApp && (
-          <ConfirmationTrackerScreen
-            application={submittedApp}
-            language={language}
-            onStartNew={handleStartNewApplication}
-          />
+        {currentStep === 6 && (
+          submittedApp ? (
+            <ConfirmationTrackerScreen
+              application={submittedApp}
+              language={language}
+              onStartNew={handleStartNewApplication}
+            />
+          ) : (
+            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
+                  📋
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    No Active Application Found
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
+                    You have not submitted any scheme applications yet. Discover eligible schemes and apply to track review status here.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (beneficiaryProfile) {
+                        setAppStage('dashboard');
+                      } else {
+                        setCurrentStep(1);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                  >
+                    <span>{beneficiaryProfile ? 'Return to Dashboard' : 'Explore Schemes'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
         )}
       </main>
 
