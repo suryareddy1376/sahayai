@@ -49,6 +49,10 @@ export interface TranslationStrings {
   searchingSchemes: string;
   submitNeed: string;
   voiceUnavailableNotice: string;
+  addPhoto?: string;
+  addDocument?: string;
+  attachmentAdded?: string;
+  removeAttachment?: string;
 
   // Scheme Results
   schemeHeroTitle: string;
@@ -146,6 +150,10 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     searchingSchemes: 'आपके लिए सबसे सही सरकारी योजना ढूंढ रहे हैं...',
     submitNeed: 'योजनाएं खोजें',
     voiceUnavailableNotice: 'आवाज़ पहचान समर्थित नहीं है, नीचे टाइप करें या उदाहरण चुनें',
+    addPhoto: 'फ़ोटो जोड़ें',
+    addDocument: 'दस्तावेज़ / PDF जोड़ें',
+    attachmentAdded: 'संलग्नक जोड़ा गया',
+    removeAttachment: 'हटाएं',
 
     schemeHeroTitle: 'आपको ₹1.4 लाख तक की सरकारी योजना में तुरंत मंज़ूरी मिल सकती है!',
     whyDoIQualify: 'यह योजना आपके लिए सही क्यों है?',
@@ -238,6 +246,10 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     searchingSchemes: 'Finding the right government schemes for you…',
     submitNeed: 'Find Schemes',
     voiceUnavailableNotice: 'Speech recognition not available on this browser. Type below or choose an example.',
+    addPhoto: 'Add Photo',
+    addDocument: 'Add Document / PDF',
+    attachmentAdded: 'Attachment added',
+    removeAttachment: 'Remove',
 
     schemeHeroTitle: 'You qualify for up to ₹1.4 lakh under government-backed support!',
     whyDoIQualify: 'Why do you qualify for this scheme?',
@@ -330,6 +342,10 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     searchingSchemes: 'तुमच्यासाठी योग्य सरकारी योजना शोधत आहोत...',
     submitNeed: 'योजना शोधा',
     voiceUnavailableNotice: 'या ब्राउझरवर आवाज उपलब्ध नाही, खाली लिहा किंवा उदाहरण निवडा',
+    addPhoto: 'फोटो जोडा',
+    addDocument: 'कागदपत्र / PDF जोडा',
+    attachmentAdded: 'संलग्नक जोडले',
+    removeAttachment: 'काढून टाका',
 
     schemeHeroTitle: 'तुम्हाला ₹१.४ लाखांपर्यंतच्या सरकारी योजनेचा थेट लाभ मिळू शकतो!',
     whyDoIQualify: 'ही योजना तुमच्यासाठी का योग्य आहे?',
@@ -422,6 +438,10 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     searchingSchemes: 'உங்களுக்கான அரசு திட்டங்களை தேடுகிறோம்...',
     submitNeed: 'திட்டங்களை கண்டறிக',
     voiceUnavailableNotice: 'குரல் உள்ளீடு கிடைக்கவில்லை. கீழே தட்டச்சு செய்யவும்.',
+    addPhoto: 'புகைப்படம் சேர்க்க',
+    addDocument: 'ஆவணம் / PDF சேர்க்க',
+    attachmentAdded: 'இணைப்பு சேர்க்கப்பட்டது',
+    removeAttachment: 'நீக்கு',
 
     schemeHeroTitle: 'நீங்கள் ₹1.4 லட்சம் வரை நேரடி அரசு நிதியுதவி பெற தகுதி பெற்றுள்ளீர்கள்!',
     whyDoIQualify: 'இந்த திட்டம் உங்களுக்கு எவ்வாறு பொருந்துகிறது?',
