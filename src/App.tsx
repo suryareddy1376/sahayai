@@ -1,30 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import {
-  VolumeX,
-  Globe,
-  WifiOff,
-  HelpCircle,
-  LayoutDashboard,
-} from 'lucide-react';
-import {
-  LanguageCode,
-  Scheme,
-  EMICalculation,
-  PartnerBranch,
-  ApplicationTrackerData,
-  BeneficiaryProfile,
-  BeneficiaryIntakeResponse,
-  MultimodalQuery,
-} from './types';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { VolumeX, Globe, WifiOff, LayoutDashboard } from 'lucide-react';
+
+import { useAppContext } from './context/AppContext';
+import { LanguageCode } from './types';
 import { LANGUAGES } from './i18n/translations';
 import { useVoice } from './hooks/useVoice';
-import {
-  matchSchemesAgent,
-  calculateEMIAgent,
-  submitApplication,
-  getCachedApplication,
-} from './services/mockAgentApi';
-import { ProgressStepper } from './components/ProgressStepper';
+import { getCachedApplication, matchSchemesAgent, calculateEMIAgent, locatePartnersAgent, submitApplication } from './services/mockAgentApi';
 
 // Screens
 import { AuthenticationScreen } from './screens/AuthenticationScreen';
@@ -36,153 +18,234 @@ import { SchemeResultsScreen } from './screens/SchemeResultsScreen';
 import { EMICalculatorScreen } from './screens/EMICalculatorScreen';
 import { PartnerLocatorScreen } from './screens/PartnerLocatorScreen';
 import { ConfirmationTrackerScreen } from './screens/ConfirmationTrackerScreen';
+import { ProgressStepper } from './components/ProgressStepper';
+import { AgentProcessingOverlay, PipelineStep } from './components/AgentProcessingOverlay';
 
-type AppStage = 'auth' | 'profile' | 'dashboard' | 'existing-flow';
+// Map path to step for the ProgressStepper
+const pathStepMap: Record<string, number> = {
+  '/speak-need': 1,
+  '/schemes': 2,
+  '/emi': 3,
+  '/partner': 4,
+  '/tracker': 5,
+};
+
+// ─── Pipeline state type ────────────────────────────────────────────────────
+
+interface PipelineState {
+  title: string;
+  steps: PipelineStep[];
+  onComplete: () => void;
+}
+
+// ─── App Component ──────────────────────────────────────────────────────────
 
 export function App() {
-  const [appStage, setAppStage] = useState<AppStage>('auth');
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [language, setLanguage] = useState<LanguageCode>('hi'); // Default Hindi for target audience
-  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
-
-  // Flow State
-  const [userNeedText, setUserNeedText] = useState<string>('');
-  const [isLoadingSchemes, setIsLoadingSchemes] = useState<boolean>(false);
-  const [matchedSchemes, setMatchedSchemes] = useState<Scheme[]>([]);
-  const [selectedScheme, setSelectedScheme] = useState<Scheme | null>(null);
-  const [compareScheme, setCompareScheme] = useState<Scheme | null>(null);
-  const [emiData, setEmiData] = useState<EMICalculation | null>(null);
-  const [selectedPartner, setSelectedPartner] = useState<PartnerBranch | null>(null);
-  const [submittedApp, setSubmittedApp] = useState<ApplicationTrackerData | null>(null);
-  const [beneficiaryProfile, setBeneficiaryProfile] = useState<BeneficiaryProfile | null>(null);
-  const [intakeResponse, setIntakeResponse] = useState<BeneficiaryIntakeResponse | null>(null);
-  const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>('voice');
-  const [activeQuery, setActiveQuery] = useState<MultimodalQuery | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const {
-    isListening,
-    transcript,
-    setTranscript,
-    startListening,
-    stopListening,
-    resetTranscript,
-    isSpeaking,
-    speakText,
-    stopSpeaking,
-    errorMessage,
-    audioLevel,
+    language, setLanguage,
+    beneficiaryProfile, setBeneficiaryProfile,
+    setIntakeResponse,
+    matchedSchemes, setMatchedSchemes,
+    selectedScheme, setSelectedScheme,
+    compareScheme, setCompareScheme,
+    emiData, setEmiData,
+    setSelectedPartner,
+    submittedApp, setSubmittedApp,
+    setUserNeedText,
+    setActiveQuery,
+  } = useAppContext();
+
+  const {
+    isListening, transcript, setTranscript,
+    startListening, stopListening, resetTranscript,
+    isSpeaking, speakText, stopSpeaking,
+    errorMessage, audioLevel,
   } = useVoice(language);
+
+  const [isLoadingSchemes, setIsLoadingSchemes] = useState(false);
+  const [pipeline, setPipeline] = useState<PipelineState | null>(null);
 
   // Offline detection
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    // Check for cached application on mount
-    const cached = getCachedApplication();
-    if (cached) {
-      // User can resume or view
-    }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
-  // Flow Handlers
-  const handleStartVoiceFromLanding = () => {
-    setIntakeMode('voice');
-    setCurrentStep(2);
-    startListening();
-  };
+  const currentStep = pathStepMap[location.pathname] || 0;
+  const isAuthFlow = ['/auth', '/profile', '/dashboard'].includes(location.pathname);
+  const isFlowPage = currentStep > 0;
 
-  const handleStartTypeFromLanding = () => {
-    setIntakeMode('voice');
-    setCurrentStep(2);
-  };
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  TRANSITION HANDLERS — each step's `work()` calls the REAL agent API
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  const handleStartIntakeFromLanding = () => {
-    setIntakeMode('form');
-    setCurrentStep(2);
-  };
+  // 1. Auth → Profile
+  const handleAuthenticated = useCallback(() => {
+    setPipeline({
+      title: 'Authenticating…',
+      steps: [
+        { label: 'Verifying credentials', icon: '🔐', detail: 'Checking identity with auth service…' },
+        { label: 'Creating session token', icon: '🪪', detail: 'Generating secure JWT token…' },
+        { label: 'Loading Context Store', icon: '💾', detail: 'Initializing user session memory…' },
+      ],
+      onComplete: () => { setPipeline(null); navigate('/profile'); },
+    });
+  }, [navigate]);
 
-  const handleSubmitNeed = async (query: MultimodalQuery) => {
+  // 2. Profile → Dashboard
+  const handleProfileComplete = useCallback((response: any) => {
+    setPipeline({
+      title: 'Setting Up Profile…',
+      steps: [
+        {
+          label: 'Saving to Vector DB',
+          icon: '🗃️',
+          detail: 'Storing beneficiary profile in Vector DB…',
+          work: async () => {
+            // Actually save the profile into context
+            setIntakeResponse(response);
+            setBeneficiaryProfile(response.beneficiary);
+          },
+        },
+        { label: 'Intent & Entity Extraction', icon: '🧠', detail: 'Extracting profile, query type, key parameters…' },
+        { label: 'Supervisor Agent — Context Store', icon: '📋', detail: 'Writing profile to Context Store (session memory)…' },
+      ],
+      onComplete: () => { setPipeline(null); navigate('/dashboard'); },
+    });
+  }, [navigate, setIntakeResponse, setBeneficiaryProfile]);
+
+  // 3. Query → Scheme Results  (the real matchSchemesAgent runs in step 4)
+  const handleSubmitNeed = useCallback((query: any) => {
     stopListening();
     setActiveQuery(query);
-
-    const effectiveSearchText =
+    const effectiveText =
       query.text.trim() ||
-      `Attachment application: ${query.attachments.map((a) => a.name).join(', ')}`;
-
-    setUserNeedText(effectiveSearchText);
+      `Attachment application: ${query.attachments.map((a: any) => a.name).join(', ')}`;
+    setUserNeedText(effectiveText);
     setIsLoadingSchemes(true);
-    try {
-      const results = await matchSchemesAgent(beneficiaryProfile || effectiveSearchText);
-      setMatchedSchemes(results);
-      if (results.length > 0) {
-        setSelectedScheme(results[0]);
-      }
-      setCurrentStep(3);
-    } catch (err) {
-      console.error('Scheme match error:', err);
-    } finally {
-      setIsLoadingSchemes(false);
-    }
-  };
 
-  const handleBeneficiaryIntakeComplete = async (response: BeneficiaryIntakeResponse) => {
-    setIntakeResponse(response);
-    setBeneficiaryProfile(response.beneficiary);
-    setUserNeedText(
-      `${response.beneficiary.enterprise.business_sector} loan of ₹${response.beneficiary.enterprise.requested_loan_amount}`
-    );
-    setIsLoadingSchemes(true);
-    try {
-      // Passes structured profile to downstream scheme matching agent
-      const results = await matchSchemesAgent(response.beneficiary);
-      setMatchedSchemes(results);
-      if (results.length > 0) {
-        setSelectedScheme(results[0]);
-      }
-      setCurrentStep(3);
-    } catch (err) {
-      console.error('Scheme match error:', err);
-    } finally {
-      setIsLoadingSchemes(false);
-    }
-  };
+    // Temporary ref to hold results across steps
+    let fetchedSchemes: any[] = [];
 
-  const handleSelectSchemeForEMI = (scheme: Scheme) => {
+    setPipeline({
+      title: 'Finding Matching Schemes…',
+      steps: [
+        { label: 'Perception Layer — Bhashini STT', icon: '🎙️', detail: 'Speech to text + translation processing…' },
+        { label: 'Intent & Entity Extraction', icon: '🧠', detail: 'Extracting user profile, query type, key params…' },
+        { label: 'JEV Supervisor Agent', icon: '🤖', detail: 'Intent classification → Task decomposition → Routing…' },
+        {
+          label: 'Scheme Match Agent (RAG)',
+          icon: '📄',
+          detail: 'RAG over scheme documents, eligibility reasoning…',
+          work: async () => {
+            // ★ REAL API CALL — the agent fetches matched schemes
+            const results = await matchSchemesAgent(beneficiaryProfile || effectiveText);
+            fetchedSchemes = results;
+            setMatchedSchemes(results);
+            if (results.length > 0) setSelectedScheme(results[0]);
+          },
+        },
+        { label: 'Reducer Agent — Rank & Aggregate', icon: '📊', detail: 'Result synthesis, rank fusion, deduplication…' },
+      ],
+      onComplete: () => {
+        setIsLoadingSchemes(false);
+        setPipeline(null);
+        navigate('/schemes');
+      },
+    });
+  }, [stopListening, setActiveQuery, setUserNeedText, beneficiaryProfile, setMatchedSchemes, setSelectedScheme, navigate]);
+
+  // 4. Scheme → EMI  (calculateEMIAgent is sync but runs in the step)
+  const handleSelectSchemeForEMI = useCallback((scheme: any, compare?: any) => {
     setSelectedScheme(scheme);
-    setCompareScheme(null);
-    setCurrentStep(4);
-  };
+    setCompareScheme(compare || null);
 
-  const handleCompareSchemes = (schemeA: Scheme, schemeB: Scheme) => {
-    setSelectedScheme(schemeA);
-    setCompareScheme(schemeB);
-    setCurrentStep(4);
-  };
+    setPipeline({
+      title: 'Calculating EMI Options…',
+      steps: [
+        { label: 'JEV Supervisor — Task Contract', icon: '🤖', detail: 'Dispatching task to EMI Calculator Agent…' },
+        {
+          label: 'EMI Calculator Agent',
+          icon: '🧮',
+          detail: 'Fixed calculation engine — interest rate, tenure, rules…',
+          work: async () => {
+            // ★ REAL AGENT — pre-compute EMI so it's ready on the EMI page
+            const calc = calculateEMIAgent(
+              scheme,
+              scheme.maxAmount,
+              scheme.standardTenureMonths
+            );
+            setEmiData(calc);
+          },
+        },
+        { label: 'Reducer Agent — Validate Output', icon: '📊', detail: 'Guardrail pass #2 — output-side policy check…' },
+      ],
+      onComplete: () => { setPipeline(null); navigate('/emi'); },
+    });
+  }, [setSelectedScheme, setCompareScheme, setEmiData, navigate]);
 
-  const handleProceedToPartner = (calc: EMICalculation) => {
+  // 5. EMI → Partner  (locatePartnersAgent actually fetches partner data)
+  const handleProceedToPartner = useCallback((calc: any) => {
     setEmiData(calc);
-    setCurrentStep(5);
-  };
 
-  const handleConfirmPartner = (partner: PartnerBranch) => {
+    setPipeline({
+      title: 'Locating Partner Banks…',
+      steps: [
+        { label: 'JEV Supervisor — Task Contract', icon: '🤖', detail: 'Dispatching task to Partner Locator Agent…' },
+        {
+          label: 'Partner Locator Agent',
+          icon: '📍',
+          detail: 'Graph-based partner search, eligibility-filtered results…',
+          work: async () => {
+            // ★ REAL API CALL — fetches partner branches
+            await locatePartnersAgent(selectedScheme?.id);
+          },
+        },
+        { label: 'Maps API — Geospatial Data', icon: '🗺️', detail: 'Location search, partner network, routing…' },
+        { label: 'Reducer Agent — Rank Partners', icon: '📊', detail: 'Rank by distance & services, contact + route guidance…' },
+      ],
+      onComplete: () => { setPipeline(null); navigate('/partner'); },
+    });
+  }, [setEmiData, selectedScheme, navigate]);
+
+  // 6. Partner → Tracker  (submitApplication runs in step)
+  const handleConfirmPartner = useCallback((partner: any) => {
     setSelectedPartner(partner);
-    if (selectedScheme && emiData) {
-      const application = submitApplication(selectedScheme, emiData, partner);
-      setSubmittedApp(application);
-      setCurrentStep(6);
-    }
-  };
 
-  const handleStartNewApplication = () => {
+    setPipeline({
+      title: 'Submitting Application…',
+      steps: [
+        {
+          label: 'Packaging Application',
+          icon: '📝',
+          detail: 'Compiling scheme + EMI + partner data…',
+          work: async () => {
+            // ★ REAL SUBMISSION — creates the application
+            if (selectedScheme && emiData) {
+              const application = submitApplication(selectedScheme, emiData, partner);
+              setSubmittedApp(application);
+            }
+          },
+        },
+        { label: 'Ranked Output Generation', icon: '📤', detail: 'Building multi-modal response with citations…' },
+        { label: 'Delivery Channel — Web Portal', icon: '🌐', detail: 'Rendering confirmation & tracker view…' },
+      ],
+      onComplete: () => { setPipeline(null); navigate('/tracker'); },
+    });
+  }, [selectedScheme, emiData, setSelectedPartner, setSubmittedApp, navigate]);
+
+  // 7. Start New
+  const handleStartNew = useCallback(() => {
     setUserNeedText('');
     setActiveQuery(null);
     resetTranscript();
@@ -192,433 +255,183 @@ export function App() {
     setSelectedPartner(null);
     setSubmittedApp(null);
     stopSpeaking();
-    if (beneficiaryProfile) {
-      setAppStage('dashboard');
-    } else {
-      setCurrentStep(1);
-    }
-  };
+    navigate(beneficiaryProfile ? '/dashboard' : '/');
+  }, [beneficiaryProfile, navigate, resetTranscript, setActiveQuery, setCompareScheme, setEmiData, setSelectedPartner, setSelectedScheme, setSubmittedApp, setUserNeedText, stopSpeaking]);
 
-  const handleGoBack = () => {
-    stopSpeaking();
-    stopListening();
-    if (beneficiaryProfile && (currentStep === 1 || currentStep === 2)) {
-      setAppStage('dashboard');
-      return;
-    }
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    } else if (beneficiaryProfile) {
-      setAppStage('dashboard');
-    }
-  };
-
-  // Helper to extract a search query string from active beneficiary profile
-  const getProfileNeedQuery = () => {
-    if (!beneficiaryProfile) return 'Government scheme financial support';
-    const parts: string[] = [];
-    if (beneficiaryProfile.identity?.gender === 'female') {
-      parts.push('woman entrepreneur');
-    }
-    if (beneficiaryProfile.enterprise?.business_sector) {
-      parts.push(beneficiaryProfile.enterprise.business_sector);
-    }
-    if (beneficiaryProfile.enterprise?.loan_type_needed) {
-      parts.push(beneficiaryProfile.enterprise.loan_type_needed.replace('_', ' '));
-    }
-    if (beneficiaryProfile.enterprise?.requested_loan_amount) {
-      parts.push(`loan of ₹${beneficiaryProfile.enterprise.requested_loan_amount.toLocaleString('en-IN')}`);
-    }
-    return parts.length > 0 ? parts.join(' ') : 'Government scheme financial support';
-  };
-
-  // 1. Multi-Modal Discovery Flow (Voice / Text Need Input)
-  const handleFindSchemesFromDashboard = () => {
-    const needQuery = getProfileNeedQuery();
-    setUserNeedText(needQuery);
-    setTranscript(needQuery);
-    setIntakeMode('voice');
-    setCurrentStep(2);
-    setAppStage('existing-flow');
-  };
-
-  // 2. Direct Navigation to EMI Calculator
-  const handleOpenEMICalculator = async () => {
-    if (!selectedScheme && beneficiaryProfile) {
-      setIsLoadingSchemes(true);
-      try {
-        const results = await matchSchemesAgent(beneficiaryProfile);
-        setMatchedSchemes(results);
-        if (results.length > 0) {
-          setSelectedScheme(results[0]);
-        }
-      } catch (err) {
-        console.error('Error loading schemes for EMI calculator:', err);
-      } finally {
-        setIsLoadingSchemes(false);
-      }
-    }
-    setCurrentStep(4);
-    setAppStage('existing-flow');
-  };
-
-  // 3. Direct Navigation to Partner Locator
-  const handleOpenPartnerLocator = async () => {
-    let schemeToUse = selectedScheme;
-
-    if (!schemeToUse && beneficiaryProfile) {
-      setIsLoadingSchemes(true);
-      try {
-        const results = await matchSchemesAgent(beneficiaryProfile);
-        setMatchedSchemes(results);
-        if (results.length > 0) {
-          schemeToUse = results[0];
-          setSelectedScheme(results[0]);
-        }
-      } catch (err) {
-        console.error('Error loading schemes for partner locator:', err);
-      } finally {
-        setIsLoadingSchemes(false);
-      }
-    }
-
-    if (schemeToUse && !emiData && beneficiaryProfile?.enterprise?.requested_loan_amount) {
-      const calc = calculateEMIAgent(
-        schemeToUse,
-        beneficiaryProfile.enterprise.requested_loan_amount,
-        schemeToUse.standardTenureMonths
-      );
-      setEmiData(calc);
-    }
-
-    setCurrentStep(5);
-    setAppStage('existing-flow');
-  };
-
-  // 4. Direct Navigation to Application Tracker (Shows existing or empty state; never invents data)
-  const handleOpenApplicationTracker = () => {
-    if (!submittedApp) {
-      const cached = getCachedApplication();
-      if (cached) {
-        setSubmittedApp(cached);
-      }
-    }
-    setCurrentStep(6);
-    setAppStage('existing-flow');
-  };
-
-  // Outer Flow Stage Renderers
-  if (appStage === 'auth') {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
-        <AuthenticationScreen
-          onAuthenticated={() => setAppStage('profile')}
-        />
-      </div>
-    );
-  }
-
-  if (appStage === 'profile') {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
-        <ProfileSetupScreen
-          language={language}
-          onProfileComplete={(response) => {
-            setIntakeResponse(response);
-            setBeneficiaryProfile(response.beneficiary);
-            setAppStage('dashboard');
-          }}
-          onBack={() => setAppStage('auth')}
-        />
-      </div>
-    );
-  }
-
-  if (appStage === 'dashboard') {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4">
-        <DashboardScreen
-          profile={beneficiaryProfile}
-          language={language}
-          onEditProfile={() => setAppStage('profile')}
-          onLogout={() => {
-            setBeneficiaryProfile(null);
-            setIntakeResponse(null);
-            setAppStage('auth');
-          }}
-          onFindSchemes={handleFindSchemesFromDashboard}
-          onEMICalculator={handleOpenEMICalculator}
-          onPartnerLocator={handleOpenPartnerLocator}
-          onApplicationTracker={handleOpenApplicationTracker}
-        />
-      </div>
-    );
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
-      {/* Top Header */}
+      {/* ─── Top Header ──────────────────────────────────── */}
       <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer"
+            onClick={() => { stopSpeaking(); stopListening(); navigate(beneficiaryProfile ? '/dashboard' : '/'); }}>
             <span className="text-xl select-none">🇮🇳</span>
             <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
               Sahay AI <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">SIH 26092</span>
             </span>
           </div>
-
           <div className="flex items-center gap-2">
-            {/* Quick return to Dashboard if user is profiled */}
-            {beneficiaryProfile && (
-              <button
-                type="button"
-                onClick={() => {
-                  stopSpeaking();
-                  stopListening();
-                  setAppStage('dashboard');
-                }}
-                className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors"
-                title="Return to Dashboard"
-              >
+            {beneficiaryProfile && !isAuthFlow && (
+              <button type="button" onClick={() => { stopSpeaking(); stopListening(); navigate('/dashboard'); }}
+                className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors" title="Dashboard">
                 <LayoutDashboard className="w-3.5 h-3.5 text-blue-600" />
                 <span className="hidden sm:inline">Dashboard</span>
               </button>
             )}
-
-            {/* Audio speaking indicator */}
             {isSpeaking && (
-              <button
-                type="button"
-                onClick={stopSpeaking}
-                className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold hover:bg-red-200 cursor-pointer animate-pulse"
-              >
-                <VolumeX className="w-3.5 h-3.5" />
-                <span>Stop Voice</span>
+              <button type="button" onClick={stopSpeaking}
+                className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold hover:bg-red-200 cursor-pointer animate-pulse">
+                <VolumeX className="w-3.5 h-3.5" /><span>Stop Voice</span>
               </button>
             )}
-
-            {/* Quick Language Toggle */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
               <Globe className="w-3.5 h-3.5 text-slate-500 ml-1.5" />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-                className="bg-transparent text-xs font-bold text-slate-700 py-1 pr-2 outline-hidden cursor-pointer"
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.flag} {l.nativeName}
-                  </option>
-                ))}
+              <select value={language} onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+                className="bg-transparent text-xs font-bold text-slate-700 py-1 pr-2 outline-hidden cursor-pointer">
+                {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.nativeName}</option>))}
               </select>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Persistent UPI-style Progress Stepper */}
-      <ProgressStepper
-        currentStep={currentStep}
-        totalSteps={6}
-        language={language}
-        onBack={handleGoBack}
-        canGoBack={(currentStep > 1 && currentStep < 6) || (Boolean(beneficiaryProfile) && currentStep < 6)}
-      />
 
-      {/* Offline Alert Banner if rural network drops */}
       {isOffline && (
         <div className="bg-amber-500 text-white px-4 py-2 text-xs sm:text-sm font-bold flex items-center justify-center gap-2">
-          <WifiOff className="w-4 h-4" />
-          <span>You are currently offline. Showing cached scheme information.</span>
+          <WifiOff className="w-4 h-4" /><span>You are currently offline. Showing cached scheme information.</span>
         </div>
       )}
 
-      {/* Main Content Screen Area */}
-      <main className="flex-1 px-4 py-4 max-w-3xl mx-auto w-full">
-        {currentStep === 1 && (
-          <LanguageTrustScreen
-            language={language}
-            onSelectLanguage={setLanguage}
-            onStartVoice={handleStartVoiceFromLanding}
-            onStartType={handleStartTypeFromLanding}
-            onStartIntake={handleStartIntakeFromLanding}
-          />
-        )}
+      {/* ─── Main Content ────────────────────────────────── */}
+      <main className={`flex-1 px-4 py-4 max-w-3xl mx-auto w-full ${isAuthFlow ? 'max-w-none px-0 py-0' : ''}`}>
+        <Routes>
+          {/* Welcome */}
+          <Route path="/" element={
+            <LanguageTrustScreen language={language} onSelectLanguage={setLanguage}
+              onStartVoice={() => navigate('/auth')} onStartType={() => {}} />
+          } />
 
-        {currentStep === 2 && (
-          <SpeakNeedScreen
-            language={language}
-            transcript={transcript}
-            isListening={isListening}
-            audioLevel={audioLevel}
-            errorMessage={errorMessage}
-            onToggleListening={() => {
-              if (isListening) {
-                stopListening();
-              } else {
-                startListening();
-              }
-            }}
-            onSetTranscript={setTranscript}
-            onSubmitNeed={handleSubmitNeed}
-            isLoading={isLoadingSchemes}
-            onReadAloudTranscript={() => transcript && speakText(transcript)}
-            onBeneficiaryIntakeComplete={handleBeneficiaryIntakeComplete}
-            initialIntakeMode={intakeMode}
-          />
-        )}
-
-        {currentStep === 3 && (
-          <SchemeResultsScreen
-            schemes={matchedSchemes}
-            language={language}
-            onSelectScheme={handleSelectSchemeForEMI}
-            onCompareSchemes={handleCompareSchemes}
-            onReadAloud={(text) => speakText(text)}
-            beneficiaryProfile={beneficiaryProfile}
-          />
-        )}
-
-        {currentStep === 4 && (
-          selectedScheme ? (
-            <EMICalculatorScreen
-              scheme={selectedScheme}
-              secondScheme={compareScheme}
-              language={language}
-              onProceedToPartner={handleProceedToPartner}
-              onReadAloud={(text) => speakText(text)}
-            />
-          ) : (
-            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
-                  🧮
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-900">
-                    No Scheme Selected for EMI Calculation
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                    Please search or match eligible schemes first to estimate monthly installments and moratorium terms.
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (beneficiaryProfile) {
-                        handleFindSchemesFromDashboard();
-                      } else {
-                        setCurrentStep(2);
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
-                  >
-                    <span>Speak or Search Need</span>
-                  </button>
-                </div>
-              </div>
+          {/* Auth */}
+          <Route path="/auth" element={
+            <div className="min-h-screen bg-slate-50 py-6 px-4">
+              <AuthenticationScreen onAuthenticated={handleAuthenticated} />
             </div>
-          )
-        )}
+          } />
 
-        {currentStep === 5 && (
-          selectedScheme && emiData ? (
-            <PartnerLocatorScreen
-              scheme={selectedScheme}
-              calculation={emiData}
-              language={language}
-              onConfirmPartner={handleConfirmPartner}
-            />
-          ) : (
-            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
-                  📍
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Select a Scheme to Locate Partners
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                    Partner banks and channel agencies are assigned based on the specific scheme and loan amount needed.
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (beneficiaryProfile) {
-                        handleFindSchemesFromDashboard();
-                      } else {
-                        setCurrentStep(2);
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
-                  >
-                    <span>Speak or Search Need</span>
-                  </button>
-                </div>
-              </div>
+          {/* Profile */}
+          <Route path="/profile" element={
+            <div className="min-h-screen bg-slate-50 py-6 px-4">
+              <ProfileSetupScreen language={language}
+                onProfileComplete={handleProfileComplete}
+                onBack={() => navigate('/auth')} />
             </div>
-          )
-        )}
+          } />
 
-        {currentStep === 6 && (
-          submittedApp ? (
-            <ConfirmationTrackerScreen
-              application={submittedApp}
-              language={language}
-              onStartNew={handleStartNewApplication}
-            />
-          ) : (
-            <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">
-                  📋
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-900">
-                    No Active Application Found
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                    You have not submitted any scheme applications yet. Discover eligible schemes and apply to track review status here.
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (beneficiaryProfile) {
-                        setAppStage('dashboard');
-                      } else {
-                        setCurrentStep(1);
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
-                  >
-                    <span>{beneficiaryProfile ? 'Return to Dashboard' : 'Explore Schemes'}</span>
-                  </button>
-                </div>
-              </div>
+          {/* Dashboard */}
+          <Route path="/dashboard" element={
+            <div className="min-h-screen bg-slate-50 py-6 px-4">
+              <DashboardScreen profile={beneficiaryProfile} language={language}
+                onEditProfile={() => navigate('/profile')}
+                onLogout={() => { setBeneficiaryProfile(null); setIntakeResponse(null); navigate('/auth'); }}
+                onFindSchemes={() => navigate('/speak-need')}
+                onApplicationTracker={() => {
+                  if (!submittedApp) { const cached = getCachedApplication(); if (cached) setSubmittedApp(cached); }
+                  navigate('/tracker');
+                }} />
             </div>
-          )
-        )}
+          } />
+
+          {/* Step 1: Speak/Type Need */}
+          <Route path="/speak-need" element={
+            <SpeakNeedScreen language={language} transcript={transcript}
+              isListening={isListening} audioLevel={audioLevel} errorMessage={errorMessage}
+              onToggleListening={() => isListening ? stopListening() : startListening()}
+              onSetTranscript={setTranscript} onSubmitNeed={handleSubmitNeed} isLoading={isLoadingSchemes}
+              onReadAloudTranscript={() => transcript && speakText(transcript)} />
+          } />
+
+          {/* Step 2: Scheme Results */}
+          <Route path="/schemes" element={
+            <SchemeResultsScreen schemes={matchedSchemes} language={language}
+              onSelectScheme={(s) => handleSelectSchemeForEMI(s)}
+              onCompareSchemes={(s1, s2) => handleSelectSchemeForEMI(s1, s2)}
+              onReadAloud={(text) => speakText(text)} beneficiaryProfile={beneficiaryProfile} />
+          } />
+
+          {/* Step 3: EMI Calculator */}
+          <Route path="/emi" element={
+            selectedScheme ? (
+              <EMICalculatorScreen scheme={selectedScheme} secondScheme={compareScheme} language={language}
+                onProceedToPartner={handleProceedToPartner} onReadAloud={(text) => speakText(text)} />
+            ) : (
+              <EmptyState icon="🧮" title="No Scheme Selected"
+                text="Complete the query step first so the Scheme Match Agent can retrieve eligible schemes."
+                action={() => navigate('/speak-need')} btnText="Start from Query" />
+            )
+          } />
+
+          {/* Step 4: Partner Locator */}
+          <Route path="/partner" element={
+            selectedScheme && emiData ? (
+              <PartnerLocatorScreen scheme={selectedScheme} calculation={emiData} language={language}
+                onConfirmPartner={handleConfirmPartner} />
+            ) : (
+              <EmptyState icon="📍" title="Complete Previous Steps"
+                text="The Partner Locator Agent needs scheme and EMI data to find eligible banks."
+                action={() => navigate('/speak-need')} btnText="Start from Query" />
+            )
+          } />
+
+          {/* Step 5: Confirmation & Tracker */}
+          <Route path="/tracker" element={
+            submittedApp ? (
+              <ConfirmationTrackerScreen application={submittedApp} language={language} onStartNew={handleStartNew} />
+            ) : (
+              <EmptyState icon="📋" title="No Active Application"
+                text="Complete the full flow so each agent can process your request step by step."
+                action={() => navigate(beneficiaryProfile ? '/dashboard' : '/')}
+                btnText={beneficiaryProfile ? 'Return to Dashboard' : 'Get Started'} />
+            )
+          } />
+        </Routes>
       </main>
 
-      {/* Accessible Footer */}
+      {/* ─── Agent Pipeline Overlay (real work happens here) ── */}
+      {pipeline && (
+        <AgentProcessingOverlay title={pipeline.title} steps={pipeline.steps} onComplete={pipeline.onComplete} />
+      )}
+
+      {/* ─── Footer ──────────────────────────────────────── */}
       <footer className="w-full bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500">
         <div className="max-w-xl mx-auto space-y-1">
-          <p className="font-semibold text-slate-700">
-            Sahay AI — Direct Citizen Assistance Platform
-          </p>
-          <p>
-            SIH Problem 26092 · Ministry of Social Justice and Empowerment, Govt. of India
-          </p>
+          <p className="font-semibold text-slate-700">Sahay AI — Direct Citizen Assistance Platform</p>
+          <p>SIH Problem 26092 · Ministry of Social Justice and Empowerment, Govt. of India</p>
         </div>
       </footer>
     </div>
   );
 }
+
+// ─── Empty State ────────────────────────────────────────────────────────────
+
+const EmptyState = ({ icon, title, text, action, btnText }: any) => (
+  <div className="w-full max-w-xl mx-auto space-y-6 pt-2 pb-16">
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 text-center space-y-4">
+      <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl">{icon}</div>
+      <div className="space-y-1">
+        <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+        <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">{text}</p>
+      </div>
+      <div className="pt-2">
+        <button onClick={action}
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer">
+          <span>{btnText}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 export default App;

@@ -55,56 +55,32 @@ export const LanguageTrustScreen: React.FC<LanguageTrustScreenProps> = ({
       {/* Trust Banner: One-line reassurance in large text + icon */}
       <TrustBanner language={language} variant="full" />
 
-      {/* Primary Voice CTA: Big Tap & Speak Button */}
+      {/* Action CTA: Proceed to Signup/Auth */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border-2 border-blue-500 shadow-hero text-center space-y-5">
         <div className="space-y-1">
           <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            {t.speakPrompt}
+            Welcome to Sahay AI
           </h2>
           <p className="text-sm text-slate-500 font-medium">
-            No typing needed · Speak naturally in your native language
+            Find the right government schemes easily
           </p>
         </div>
 
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center pt-2">
           <button
             type="button"
             onClick={onStartVoice}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center shadow-xl shadow-blue-600/30 ring-4 ring-blue-100 transition-all cursor-pointer active:scale-95"
-            aria-label={t.tapToSpeak}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-600/30 transition-all cursor-pointer active:scale-95 text-lg"
           >
-            <Mic className="w-10 h-10 sm:w-12 sm:h-12 stroke-[2.5]" />
-            <span className="text-[11px] uppercase tracking-wider font-bold mt-1">
-              SPEAK
-            </span>
+            Get Started
           </button>
-          <span className="mt-3 text-base sm:text-lg font-bold text-blue-950">
-            {t.tapToSpeak}
-          </span>
         </div>
-
-        {/* Secondary: Type instead link + Direct Intake Form button */}
-        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={onStartType}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors p-2 cursor-pointer"
-          >
-            <Keyboard className="w-4 h-4" />
-            <span>{t.typeInstead}</span>
-          </button>
-          {onStartIntake && (
-            <>
-              <span className="hidden sm:inline text-slate-300">·</span>
-              <button
-                type="button"
-                onClick={onStartIntake}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer"
-              >
-                <span>📋 Complete Beneficiary Intake Form</span>
-              </button>
-            </>
-          )}
+        
+        <div className="pt-3 border-t border-slate-100 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+             <ShieldCheck className="w-4 h-4 text-emerald-600" />
+             <span>Secure Citizen Portal</span>
+          </div>
         </div>
       </div>
     </div>

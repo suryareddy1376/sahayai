@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Sparkles,
@@ -58,10 +59,9 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
   isLoading,
   onReadAloudTranscript,
   onBeneficiaryIntakeComplete,
-  initialIntakeMode = 'voice',
 }) => {
   const t = translations[language];
-  const [intakeMode, setIntakeMode] = useState<'voice' | 'form'>(initialIntakeMode);
+  const navigate = useNavigate();
   const [showTypeInput, setShowTypeInput] = useState(false);
   const [queryText, setQueryText] = useState(transcript || '');
   const [hasVoiceInput, setHasVoiceInput] = useState(false);
@@ -216,10 +216,10 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
 
         <div className="space-y-2">
           <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            {t.searchingSchemes}
+            Supervisor Agent & Scheme Matcher Working...
           </h2>
           <p className="text-sm text-slate-500 font-medium max-w-xs mx-auto">
-            Checking central and state corporation allocations for your profile…
+            Checking intent classification, running RAG against government policy documents...
           </p>
         </div>
 
@@ -237,53 +237,7 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
     <div className="w-full max-w-2xl mx-auto space-y-6 pt-2 pb-12">
       <TrustBanner language={language} variant="compact" />
 
-      {/* Mode Switcher: Voice Discovery vs Full Beneficiary Profile */}
-      <div className="flex p-1 bg-slate-200/80 rounded-2xl max-w-sm mx-auto">
-        <button
-          type="button"
-          onClick={() => setIntakeMode('voice')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            intakeMode === 'voice'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Mic className="w-3.5 h-3.5" />
-          <span>Voice Discovery</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setIntakeMode('form')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            intakeMode === 'form'
-              ? 'bg-white text-blue-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <UserCheck className="w-3.5 h-3.5 text-blue-600" />
-          <span>Beneficiary Profile</span>
-        </button>
-      </div>
 
-      {intakeMode === 'form' ? (
-        <BeneficiaryIntakeForm
-          language={language}
-          initialNeedText={activeText}
-          onIntakeComplete={(res) => {
-            if (onBeneficiaryIntakeComplete) {
-              onBeneficiaryIntakeComplete(res);
-            } else {
-              onSubmitNeed({
-                text: res.beneficiary.identity.full_name,
-                source: 'text',
-                attachments: [],
-                timestamp: new Date().toISOString(),
-              });
-            }
-          }}
-        />
-      ) : (
-        <>
           {/* Hero Title */}
           <div className="text-center space-y-1">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
@@ -533,30 +487,6 @@ export const SpeakNeedScreen: React.FC<SpeakNeedScreenProps> = ({
           </div>
         </div>
 
-        {/* SIH 26092 Beneficiary Profile Intake Direct CTA */}
-        <div className="bg-blue-50/80 border border-blue-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-          <div className="space-y-0.5">
-            <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
-              Beneficiary Intake (SIH 26092)
-            </span>
-            <h4 className="text-sm font-black text-slate-900">
-              Want exact subsidy & quota calculations?
-            </h4>
-            <p className="text-xs text-slate-600 font-medium">
-              Complete the 6-group profile (Identity, Location, Financial, Enterprise, Documents).
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIntakeMode('form')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
-          >
-            <UserCheck className="w-4 h-4" />
-            <span>Open Profile Form</span>
-          </button>
-        </div>
-      </>
-    )}
   </div>
 );
 };

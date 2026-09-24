@@ -240,64 +240,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           Explore Services & Tools
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: EMI Calculator */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-5 flex flex-col justify-between hover:border-blue-300 transition-all">
-            <div className="space-y-3">
-              <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-xs">
-                <Calculator className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-bold text-slate-900">
-                  EMI Calculator
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Estimate monthly installments with applicable interest rates and moratorium grace periods.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={onEMICalculator}
-                className="w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-800 hover:text-blue-700 text-xs font-bold transition-colors flex items-center justify-between cursor-pointer"
-              >
-                <span>Calculate Repayment</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 2: Partner Locator */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-5 flex flex-col justify-between hover:border-blue-300 transition-all">
-            <div className="space-y-3">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-xs">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-bold text-slate-900">
-                  Partner Locator
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Locate nearby nationalized banks, state channel partners, and rural development bank branches.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={onPartnerLocator}
-                className="w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 text-xs font-bold transition-colors flex items-center justify-between cursor-pointer"
-              >
-                <span>Find Nearby Banks</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: Application Tracker */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: Application Tracker */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-5 flex flex-col justify-between hover:border-blue-300 transition-all">
             <div className="space-y-3">
               <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-xs">
@@ -321,6 +265,32 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               >
                 <span>Check Application Status</span>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Card 2: Help & Support (Placeholder to fill grid) */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-5 flex flex-col justify-between hover:border-blue-300 transition-all opacity-70">
+            <div className="space-y-3">
+              <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shadow-xs">
+                <ClipboardList className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-slate-900">
+                  Help & FAQs
+                </h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Read commonly asked questions about government scheme eligibility.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 mt-2 border-t border-slate-100">
+              <button
+                type="button"
+                className="w-full py-2.5 px-3 rounded-xl bg-slate-50 text-slate-500 text-xs font-bold flex items-center justify-between cursor-not-allowed"
+              >
+                <span>Coming Soon</span>
               </button>
             </div>
           </div>
