@@ -21,10 +21,14 @@ export async function submitBeneficiaryIntakeApi(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const rawDetail = errorData.detail;
+      const message = typeof rawDetail === 'string' ? rawDetail
+        : Array.isArray(rawDetail) ? rawDetail.map((e: any) => e.msg || JSON.stringify(e)).join('; ')
+        : `Server error: ${response.statusText}`;
       return {
         success: false,
         status_code: response.status as any,
-        message: errorData.detail || `Server error: ${response.statusText}`,
+        message,
         timestamp: new Date().toISOString(),
         beneficiary: null as any,
         sensitive_record_ref: null as any,

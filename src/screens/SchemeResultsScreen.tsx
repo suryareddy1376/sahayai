@@ -90,11 +90,11 @@ export const SchemeResultsScreen: React.FC<SchemeResultsScreenProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-1 text-blue-100 font-bold">
               <span>👤 Profile: {beneficiaryProfile.identity.full_name} ({beneficiaryProfile.identity.gender})</span>
               <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-md font-mono text-[10px]">
-                🌿 Neo4j Graph Linked (2 Schemes)
+                🌿 Neo4j Graph Linked ({translatedSchemes.length} Schemes)
               </span>
             </div>
             <p className="text-slate-300 text-[11px]">
-              Sector: {beneficiaryProfile.enterprise.business_sector} · Loan: ₹{beneficiaryProfile.enterprise.requested_loan_amount.toLocaleString('en-IN')} · PIN: {beneficiaryProfile.location.pincode}
+              Sector: {beneficiaryProfile.enterprise?.business_sector || 'N/A'} · Loan: ₹{(beneficiaryProfile.enterprise?.requested_loan_amount || 0).toLocaleString('en-IN')} · PIN: {beneficiaryProfile.location?.pincode || 'N/A'}
             </p>
           </div>
         )}

@@ -82,7 +82,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
     setIsLoading(true);
     
     // Convert mobile to mock email if it's 10 digits
-    const email = identifier.includes('@') ? identifier : `${identifier}@sahayai.com`;
+    const email = identifier.includes('@') ? identifier.trim() : `${identifier.replace(/[\s\-\+\(\)]/g, '')}@sahayai.com`;
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -131,7 +131,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
     setIsLoading(true);
     
     // Convert mobile to mock email if it's 10 digits
-    const email = identifier.includes('@') ? identifier : `${identifier}@sahayai.com`;
+    const email = identifier.includes('@') ? identifier.trim() : `${identifier.replace(/[\s\-\+\(\)]/g, '')}@sahayai.com`;
 
     try {
       const { data, error } = await supabase.auth.signUp({

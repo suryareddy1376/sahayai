@@ -294,10 +294,21 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Client-side dry validation check
-    const valResult = { isValid: true, errors: [] as ValidationError[] };
-    if (!valResult.isValid) {
-      setValidationErrors(valResult.errors);
+    // Client-side validation
+    const errors: ValidationError[] = [];
+    if (!formData.identity.full_name.trim()) errors.push({ group: 'identity', field: 'full_name', message: 'Full name is required.' });
+    if (!formData.identity.age || formData.identity.age < 18 || formData.identity.age > 100) errors.push({ group: 'identity', field: 'age', message: 'Age must be between 18 and 100.' });
+    if (!formData.identity.gender) errors.push({ group: 'identity', field: 'gender', message: 'Gender is required.' });
+    if (!formData.identity.caste_category) errors.push({ group: 'identity', field: 'caste_category', message: 'Caste category is required.' });
+    if (!formData.identity.id_proof_number.trim()) errors.push({ group: 'identity', field: 'id_proof_number', message: 'ID proof number is required.' });
+    if (!formData.location.state.trim()) errors.push({ group: 'location', field: 'state', message: 'State is required.' });
+    if (!formData.location.district.trim()) errors.push({ group: 'location', field: 'district', message: 'District is required.' });
+    if (!formData.location.village_or_town.trim()) errors.push({ group: 'location', field: 'village_or_town', message: 'Village or town is required.' });
+    if (!/^\d{6}$/.test(formData.location.pincode)) errors.push({ group: 'location', field: 'pincode', message: 'PIN code must be exactly 6 digits.' });
+    if (!formData.enterprise.loan_type_needed) errors.push({ group: 'enterprise', field: 'loan_type_needed', message: 'Loan type is required.' });
+    if (!formData.enterprise.requested_loan_amount || formData.enterprise.requested_loan_amount <= 0) errors.push({ group: 'enterprise', field: 'requested_loan_amount', message: 'Requested loan amount must be greater than 0.' });
+    if (errors.length > 0) {
+      setValidationErrors(errors);
       return;
     }
     setValidationErrors([]);
@@ -325,14 +336,15 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
       setLastApiResponse(response);
 
       if (response.success) {
-        if (response.document_processing.mismatches.length > 0) {
+        if (response.document_processing?.mismatches?.length > 0) {
           setMismatchFlags(response.document_processing.mismatches);
         }
         // Notify parent and transition downstream
         onIntakeComplete(response);
       } else {
+        const errMsg = typeof response.message === 'string' ? response.message : 'Submission failed. Please try again.';
         setValidationErrors([
-          { group: 'identity', field: 'api_error', message: response.message },
+          { group: 'identity', field: 'api_error', message: errMsg },
         ]);
       }
     } catch (err: any) {

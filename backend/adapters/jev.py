@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 
 class JevStubRouter:
     def classify_and_route(self, perception_result: dict, context_ref: str) -> list[dict]:
-        text = str(perception_result.get('text', '')).lower()
+        text = str(perception_result.get('text', '') or perception_result.get('text_en', '')).lower()
         
         # Guardrail #1
         out_of_scope_keywords = ['kill', 'violence', 'abuse', 'hack']

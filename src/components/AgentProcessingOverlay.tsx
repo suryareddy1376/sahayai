@@ -47,10 +47,15 @@ export const AgentProcessingOverlay: React.FC<AgentProcessingOverlayProps> = ({
 
       if (step.work) {
         // Run the actual agent work + ensure minimum visible time (800ms)
-        const [result] = await Promise.all([
-          step.work(),
-          new Promise((r) => setTimeout(r, 800)),
-        ]);
+        try {
+          await Promise.all([
+            step.work(),
+            new Promise((r) => setTimeout(r, 800)),
+          ]);
+        } catch (err) {
+          console.error(`Pipeline step "${step.label}" failed:`, err);
+          // Continue to next step instead of freezing the entire UI
+        }
       } else {
         // No work — just animate for 800ms
         await new Promise((r) => setTimeout(r, 800));

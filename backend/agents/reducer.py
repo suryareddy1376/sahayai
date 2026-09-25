@@ -22,7 +22,7 @@ class ReducerAgent:
         # Guardrail #2: Out-of-policy checks (Verify amounts within scheme limits)
         guardrail_flags = []
         
-        emi_plans = emi_data.get("plans", []) if isinstance(emi_data, dict) else emi_data
+        emi_plans = emi_data.get("plans", []) if isinstance(emi_data, dict) else (emi_data if isinstance(emi_data, list) else [])
         principal_requested = emi_data.get("principal") if isinstance(emi_data, dict) else None
         
         for plan in emi_plans:

@@ -6,11 +6,11 @@ class Settings(BaseSettings):
     BHASHINI_API_KEY: Optional[str] = None
     BHASHINI_USER_ID: Optional[str] = None
     
-    SUPABASE_URL: str
-    SUPABASE_ANON_KEY: str
-    SUPABASE_SERVICE_ROLE_KEY: str
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     
-    PINECONE_API_KEY: str
+    PINECONE_API_KEY: Optional[str] = None
     PINECONE_INDEX_NAME: str = 'sahay-schemes'
     PINECONE_ENVIRONMENT: str = 'gcp-starter'
     

@@ -74,7 +74,8 @@ export function calculateEMIAgent(
   principal: number,
   tenureMonths: number
 ): EMICalculation {
-  const r = (scheme.interestRate / 100) / 12;
+  const rate = scheme.interestRate ?? 0;
+  const r = (rate / 100) / 12;
   const n = tenureMonths || 1;
   const emi = r === 0 
     ? principal / n 

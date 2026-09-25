@@ -47,7 +47,13 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_BASE_URL, "http://localhost:5173", "http://localhost:3000", ],
+    allow_origins=[
+        settings.FRONTEND_BASE_URL,
+        "https://sahayai-five.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,7 +111,8 @@ def health_check():
 
 @app.post("/api/session")
 def create_session():
-    session = context_store.create_session()
+    session_id = f"ses_{uuid.uuid4().hex[:12]}"
+    session = context_store.create_session(session_id)
     return {"session_id": session["session_id"], "profile": session.get("profile")}
 
 
