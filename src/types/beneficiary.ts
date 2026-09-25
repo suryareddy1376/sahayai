@@ -74,10 +74,10 @@ export interface UploadedDocumentMeta {
 }
 
 export interface DocumentsGroup {
-  caste_certificate: UploadedDocumentMeta;
-  income_certificate: UploadedDocumentMeta;
-  id_proof: UploadedDocumentMeta;
-  address_proof: UploadedDocumentMeta;
+  caste_certificate?: UploadedDocumentMeta;
+  income_certificate?: UploadedDocumentMeta;
+  id_proof?: UploadedDocumentMeta;
+  address_proof?: UploadedDocumentMeta;
   /** Optional, only allowed if loan_type_needed != 'education_loan' */
   business_proposal?: UploadedDocumentMeta;
 }
@@ -129,10 +129,10 @@ export interface BeneficiaryProfile {
   enterprise: EnterpriseGroup;
   education?: EducationGroup;
   documents: {
-    caste_certificate: UploadedDocumentMeta;
-    income_certificate: UploadedDocumentMeta;
-    id_proof: UploadedDocumentMeta;
-    address_proof: UploadedDocumentMeta;
+    caste_certificate?: UploadedDocumentMeta;
+    income_certificate?: UploadedDocumentMeta;
+    id_proof?: UploadedDocumentMeta;
+    address_proof?: UploadedDocumentMeta;
     business_proposal?: UploadedDocumentMeta;
   };
   created_at: string;

@@ -29,12 +29,18 @@ export const PartnerLocatorScreen: React.FC<PartnerLocatorScreenProps> = ({
   useEffect(() => {
     async function loadPartners() {
       setIsLoading(true);
-      const data = await locatePartnersAgent(scheme.id);
-      setPartners(data);
-      if (data.length > 0) {
-        setSelectedPartner(data[0]);
+      try {
+        const data = await locatePartnersAgent(scheme.id);
+        setPartners(data);
+        if (data.length > 0) {
+          setSelectedPartner(data[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load partners', err);
+        setPartners([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadPartners();
   }, [scheme.id]);

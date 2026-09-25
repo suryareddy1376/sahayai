@@ -33,6 +33,7 @@ import {
   UploadedDocumentMeta,
   DocumentMismatchFlag,
 } from '../types';
+import { uploadDocument } from '../services/supabaseClient';
 import { submitBeneficiaryIntakeApi } from '../services/beneficiaryIntakeApi';
 
 export interface ValidationError { field: string; message: string; group?: string; }
@@ -98,6 +99,7 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [mismatchFlags, setMismatchFlags] = useState<DocumentMismatchFlag[]>([]);
   const [activeTab, setActiveTab] = useState<'form' | 'api_preview'>('form');
@@ -118,33 +120,6 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
     }
   };
 
-  const toggleSimulatedMismatch = () => {
-    const next = !simulatedMismatch;
-    setSimulatedMismatch(next);
-    if (next) {
-      setFormData((prev) => ({
-        ...prev,
-        documents: {
-          ...prev.documents,
-          income_certificate: {
-            ...prev.documents.income_certificate,
-            file_name: 'income_certificate_mismatch_diff.pdf',
-          },
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        documents: {
-          ...prev.documents,
-          income_certificate: {
-            ...prev.documents.income_certificate,
-            file_name: 'income_certificate_tehsildar.pdf',
-          },
-        },
-      }));
-    }
-  };
 
   // Field change helper
   const updateIdentity = (patch: Partial<BeneficiaryIntakeFormData['identity']>) => {
@@ -191,6 +166,11 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
       upload_timestamp: new Date().toISOString(),
       ocr_status: 'queued',
     };
+    
+    if (file) {
+      setPendingFiles(prev => ({ ...prev, [docKey]: file }));
+    }
+
     setFormData((prev) => ({
       ...prev,
       documents: {
@@ -340,7 +320,23 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
 
     try {
       // Calls server-side intake API endpoint handler
-      const response = await submitBeneficiaryIntakeApi(formData);
+            // 1. Upload files to Supabase S3
+      const newDocs = { ...formData.documents };
+      for (const [docKey, file] of Object.entries(pendingFiles)) {
+        let folderName = 'ID Proof';
+        if (docKey === 'caste_certificate') folderName = 'Caste Certificate';
+        if (docKey === 'income_certificate') folderName = 'Income Certificate';
+        if (docKey === 'address_proof') folderName = 'Address Proof';
+        
+        const path = await uploadDocument(file, folderName);
+        if (path && (newDocs as any)[docKey]) {
+          (newDocs as any)[docKey].storage_url = path;
+        }
+      }
+      const finalData = { ...formData, documents: newDocs };
+
+      // 2. Submit to Backend API
+      const response = await submitBeneficiaryIntakeApi(finalData);
       setLastApiResponse(response);
 
       if (response.success) {
@@ -561,17 +557,7 @@ RETURN u`}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-emerald-400 font-bold">Multimodal OCR / VLM Queue Status:</span>
-                    <button
-                      type="button"
-                      onClick={toggleSimulatedMismatch}
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                        simulatedMismatch
-                          ? 'bg-rose-600 text-white'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                      }`}
-                    >
-                      {simulatedMismatch ? '✓ Mismatch Injected (Click to reset)' : '🧪 Inject Income Mismatch Test'}
-                    </button>
+                    
                   </div>
                   <div className="space-y-1.5 text-[11px]">
                     <div className="bg-slate-900 p-2 rounded-lg flex items-center justify-between">
