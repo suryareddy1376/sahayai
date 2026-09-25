@@ -174,12 +174,12 @@ class SchemeMatchAgent:
         if pinecone_api_key and pinecone_index_name:
             try:
                 from pinecone import Pinecone
-                from sentence_transformers import SentenceTransformer
+                import httpx
                 
                 pc = Pinecone(api_key=pinecone_api_key)
                 self.pc_index = pc.Index(pinecone_index_name)
                 # Load the same lightweight embedding model used for seeding
-                self.embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+                self.embed_model = 'HF_API'
                 logger.info(f"SchemeMatchAgent initialized with Pinecone ('{pinecone_index_name}') and embedding model.")
             except Exception as e:
                 logger.error(f"Failed to initialize Pinecone or embedding model: {e}")
@@ -199,7 +199,16 @@ class SchemeMatchAgent:
         if self.pc_index and self.embed_model and isinstance(need_input, str) and need_input.strip():
             try:
                 logger.info("Querying Pinecone index for vector similarity...")
-                query_vector = self.embed_model.encode(need_input).tolist()
+                
+                # Call HuggingFace Inference API instead of heavy local PyTorch
+                async with httpx.AsyncClient() as client:
+                    hf_resp = await client.post(
+                        "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+                        json={"inputs": [need_input], "options": {"wait_for_model": True}},
+                        timeout=15.0
+                    )
+                    query_vector = hf_resp.json()[0]
+
                 
                 search_res = self.pc_index.query(
                     namespace="sahay-schemes-ns",

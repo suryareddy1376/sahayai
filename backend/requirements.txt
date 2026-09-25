@@ -4,7 +4,6 @@ pydantic==2.6.1
 pydantic-settings==2.1.0
 supabase==2.3.4
 pinecone==3.1.0
-sentence-transformers==2.3.1
 neo4j==5.17.0
 httpx==0.25.2
 python-multipart==0.0.9
