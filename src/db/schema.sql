@@ -243,3 +243,20 @@ CREATE INDEX idx_audit_timestamp ON user_sensitive_audit_log(timestamp);
 --     evaluation_reason: $reason
 -- }]->(s)
 -- ====================================================================================
+
+
+-- ------------------------------------------------------------------------------------
+-- 8. APPLICATIONS TRACKER
+-- ------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS applications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    application_id VARCHAR(100) UNIQUE NOT NULL,
+    scheme_name VARCHAR(255) NOT NULL,
+    loan_amount INT NOT NULL,
+    monthly_emi INT NOT NULL,
+    partner_name VARCHAR(255) NOT NULL,
+    partner_address TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'submitted',
+    status_reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

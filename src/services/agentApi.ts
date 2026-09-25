@@ -11,7 +11,7 @@ export async function submitApplication(
   partner: PartnerBranch,
   phone: string,
   whatsappAlert: boolean
-): Promise<{ success: boolean; applicationId: string; receipt: ApplicationTrackerData }> {
+): Promise<ApplicationTrackerData> {
   try {
     const response = await fetch(`${BACKEND_URL}/api/applications`, {
       method: 'POST',
@@ -24,6 +24,7 @@ export async function submitApplication(
     }
     
     const data = await response.json();
+    localStorage.setItem('sahay_application', JSON.stringify(data));
     return data;
   } catch (err) {
     console.error("Submission failed:", err);
@@ -32,7 +33,11 @@ export async function submitApplication(
 }
 
 export function getCachedApplication(): ApplicationTrackerData | null {
-  return null; // Local caching removed for strict API dependence
+  try {
+    const cached = localStorage.getItem('sahay_application');
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
 }
 
 export async function matchSchemesAgent(
@@ -70,7 +75,7 @@ export function calculateEMIAgent(
   tenureMonths: number
 ): EMICalculation {
   const r = (scheme.interestRate / 100) / 12;
-  const n = tenureMonths;
+  const n = tenureMonths || 1;
   const emi = r === 0 
     ? principal / n 
     : (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);

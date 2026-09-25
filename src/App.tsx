@@ -233,7 +233,7 @@ export function App() {
             // ★ REAL SUBMISSION — creates the application
             if (selectedScheme && emiData) {
               const response = await submitApplication(selectedScheme, emiData, partner, '+91 98765 43210', true);
-              setSubmittedApp(response.receipt);
+              setSubmittedApp(response as any);
             }
           },
         },
