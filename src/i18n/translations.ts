@@ -130,7 +130,7 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     step6: 'आवेदन रसीद और ट्रैकर',
     back: 'वापस जाएं',
 
-    trustTitle: 'सरकारी सेवा — पूरी तरह सुरक्षित',
+    trustTitle: 'सरकारी सेवा - पूरी तरह सुरक्षित',
     trustSubtitle: 'यह सामाजिक न्याय एवं अधिकारिता मंत्रालय की सीधी सेवा है। कोई दलाल या बिचौलिया नहीं।',
     ministryBadge: 'भारत सरकार मान्यता प्राप्त',
     noFeeBadge: '100% मुफ़्त सेवा',
@@ -226,7 +226,7 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     step6: 'Application Receipt & Tracker',
     back: 'Go Back',
 
-    trustTitle: 'Direct Government Service — Safe & Private',
+    trustTitle: 'Direct Government Service - Safe & Private',
     trustSubtitle: 'Direct service by Ministry of Social Justice & Empowerment. No agents, zero commission.',
     ministryBadge: 'Govt. of India Recognized',
     noFeeBadge: '100% Free Service',
@@ -322,7 +322,7 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     step6: 'पावती व ट्रॅकर',
     back: 'मागे जा',
 
-    trustTitle: 'थेट सरकारी सेवा — पूर्णपणे सुरक्षित',
+    trustTitle: 'थेट सरकारी सेवा - पूर्णपणे सुरक्षित',
     trustSubtitle: 'सामाजिक न्याय आणि सक्षमीकरण मंत्रालयाची अधिकृत सेवा. कोणताही दलाल नाही.',
     ministryBadge: 'भारत सरकार मान्यताप्राप्त',
     noFeeBadge: '१००% मोफत सेवा',
@@ -418,7 +418,7 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     step6: 'விண்ணப்ப ரசீது & ட்ராக்கர்',
     back: 'பின்செல்ல',
 
-    trustTitle: 'நேரடி அரசு சேவை — பாதுகாப்பானது',
+    trustTitle: 'நேரடி அரசு சேவை - பாதுகாப்பானது',
     trustSubtitle: 'சமூக நீதி மற்றும் அதிகாரமளித்தல் அமைச்சகத்தின் நேரடி சேவை. தரகர்கள் இல்லை.',
     ministryBadge: 'இந்திய அரசு அங்கீகாரம்',
     noFeeBadge: '100% இலவச சேவை',

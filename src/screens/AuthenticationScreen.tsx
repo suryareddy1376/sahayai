@@ -92,6 +92,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
 
       if (error) throw error;
 
+      localStorage.setItem('sahay_user_phone', identifier.trim());
       setSuccessMessage('Logged in successfully! Redirecting...');
       setTimeout(() => {
         onAuthenticated?.();
@@ -146,6 +147,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
 
       if (error) throw error;
       
+      localStorage.setItem('sahay_user_phone', identifier.trim());
       setSuccessMessage('Account created successfully! Redirecting...');
       setTimeout(() => {
         onAuthenticated?.();

@@ -11,11 +11,11 @@ export interface IdentityGroup {
   full_name: string;
   age: number;
   gender: Gender;
-  /** Sensitive attribute — stored separately with access control */
+  /** Sensitive attribute - stored separately with access control */
   caste_category: CasteCategory;
-  /** Never stored in plaintext — persisted as hashed & masked */
+  /** Never stored in plaintext - persisted as hashed & masked */
   id_proof_number: string;
-  /** Optional sensitive attribute — self-declared with consent checkbox */
+  /** Optional sensitive attribute - self-declared with consent checkbox */
   disability_status?: boolean;
   disability_consent?: boolean;
 }

@@ -66,7 +66,7 @@ export function useVoice(currentLanguage: LanguageCode) {
 
   // Simulate audio level from recognition events (no competing getUserMedia stream)
   const pulseAudio = useCallback(() => {
-    // Simple visual pulse when speaking is detected — no second mic stream needed
+    // Simple visual pulse when speaking is detected - no second mic stream needed
     setAudioLevel(Math.floor(Math.random() * 40) + 40);
     const timer = setTimeout(() => setAudioLevel(0), 300);
     return () => clearTimeout(timer);
@@ -113,7 +113,7 @@ export function useVoice(currentLanguage: LanguageCode) {
 
     try {
       const recognition = new SpeechRec();
-      recognition.continuous = false; // Single-shot mode — more reliable across devices
+      recognition.continuous = false; // Single-shot mode - more reliable across devices
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
       recognition.lang = getLanguageTag(currentLanguage);
@@ -153,7 +153,7 @@ export function useVoice(currentLanguage: LanguageCode) {
         console.warn('[Sahay Voice] Error:', err);
 
         if (err === 'no-speech') {
-          // Not fatal — just means silence was detected. Will auto-restart below.
+          // Not fatal - just means silence was detected. Will auto-restart below.
           return;
         }
         if (err === 'aborted') {
@@ -166,7 +166,7 @@ export function useVoice(currentLanguage: LanguageCode) {
           return;
         }
         if (err === 'network') {
-          setErrorMessage('Network error — speech recognition needs internet. Check your connection.');
+          setErrorMessage('Network error - speech recognition needs internet. Check your connection.');
           return;
         }
         if (err === 'audio-capture') {

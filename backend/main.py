@@ -390,19 +390,9 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
                 "full_name": identity.get("full_name", ""),
                 "age": identity.get("age", 18),
                 "gender": identity.get("gender", "other"),
-                "has_declared_disability": bool(identity.get("disability_status")),
-                "id_proof_number_masked": id_masked,
-                "state": location.get("state", ""),
-                "district": location.get("district", ""),
-                "village_or_town": location.get("village_or_town", ""),
-                "pincode": location.get("pincode", "000000"),
                 "is_rural": location.get("is_rural", True),
                 "annual_family_income": financial.get("annual_family_income", 0),
-                "existing_loan_flag": financial.get("existing_loan_flag", False),
-                "existing_loan_npa_status": financial.get("existing_loan_npa_status", "none"),
                 "loan_type_needed": enterprise.get("loan_type_needed", "micro_finance"),
-                "business_sector": enterprise.get("business_sector", "other"),
-                "is_new_venture": enterprise.get("is_new_venture", True),
                 "requested_loan_amount": enterprise.get("requested_loan_amount", 0)
             }
             # Attempt insert; ignore failure if schema not run yet for dev continuity
@@ -411,15 +401,15 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
                 
                 # Insert sensitive attributes
                 sensitive_record = {
+                    "record_id": f"SENS-ATTR-{uuid.uuid4().hex[:8]}",
                     "user_id": user_id,
                     "caste_category": identity.get("caste_category", "General"),
-                    "disability_status": bool(identity.get("disability_status")),
-                    "id_proof_number_hash": id_hash,
-                    "id_proof_number_masked": id_masked
+                    "disability_status": str(bool(identity.get("disability_status"))).lower(),
+                    "id_proof_masked": id_masked
                 }
                 supabase.table("user_sensitive_attributes").insert(sensitive_record).execute()
             except Exception as db_err:
-                logger.error(f"Supabase write failed (Did you run schema.sql?): {db_err}")
+                logger.error(f"Supabase write failed: {db_err}")
 
         # Build sanitized profile response
         profile = {
@@ -513,7 +503,9 @@ def create_application(body: dict):
                     "partner_name": application["partnerName"],
                     "partner_address": application["partnerAddress"],
                     "status": "submitted",
-                    "status_reason": application["statusReasonText"]
+                    "status_reason": application["statusReasonText"],
+                    "notify_phone": application["notifyPhone"],
+                    "notify_whatsapp": application["notifyWhatsApp"]
                 }
                 supabase.table("applications").insert(db_record).execute()
             except Exception as e:

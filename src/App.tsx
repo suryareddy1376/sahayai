@@ -86,7 +86,7 @@ export function App() {
   const isFlowPage = currentStep > 0;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  TRANSITION HANDLERS — each step's `work()` calls the REAL agent API
+  //  TRANSITION HANDLERS - each step's `work()` calls the REAL agent API
   // ═══════════════════════════════════════════════════════════════════════════
 
   // 1. Auth → Profile
@@ -118,7 +118,7 @@ export function App() {
           },
         },
         { label: 'Intent & Entity Extraction', icon: '🧠', detail: 'Extracting profile, query type, key parameters…' },
-        { label: 'Supervisor Agent — Context Store', icon: '📋', detail: 'Writing profile to Context Store (session memory)…' },
+        { label: 'Supervisor Agent - Context Store', icon: '📋', detail: 'Writing profile to Context Store (session memory)…' },
       ],
       onComplete: () => { setPipeline(null); navigate('/dashboard'); },
     });
@@ -140,7 +140,7 @@ export function App() {
     setPipeline({
       title: 'Finding Matching Schemes…',
       steps: [
-        { label: 'Perception Layer — Bhashini STT', icon: '🎙️', detail: 'Speech to text + translation processing…' },
+        { label: 'Perception Layer - Bhashini STT', icon: '🎙️', detail: 'Speech to text + translation processing…' },
         { label: 'Intent & Entity Extraction', icon: '🧠', detail: 'Extracting user profile, query type, key params…' },
         { label: 'JEV Supervisor Agent', icon: '🤖', detail: 'Intent classification → Task decomposition → Routing…' },
         {
@@ -148,14 +148,14 @@ export function App() {
           icon: '📄',
           detail: 'RAG over scheme documents, eligibility reasoning…',
           work: async () => {
-            // ★ REAL API CALL — the agent fetches matched schemes
+            // ★ REAL API CALL - the agent fetches matched schemes
             const results = await matchSchemesAgent(beneficiaryProfile || effectiveText);
             fetchedSchemes = results;
             setMatchedSchemes(results);
             if (results.length > 0) setSelectedScheme(results[0]);
           },
         },
-        { label: 'Reducer Agent — Rank & Aggregate', icon: '📊', detail: 'Result synthesis, rank fusion, deduplication…' },
+        { label: 'Reducer Agent - Rank & Aggregate', icon: '📊', detail: 'Result synthesis, rank fusion, deduplication…' },
       ],
       onComplete: () => {
         setIsLoadingSchemes(false);
@@ -173,13 +173,13 @@ export function App() {
     setPipeline({
       title: 'Calculating EMI Options…',
       steps: [
-        { label: 'JEV Supervisor — Task Contract', icon: '🤖', detail: 'Dispatching task to EMI Calculator Agent…' },
+        { label: 'JEV Supervisor - Task Contract', icon: '🤖', detail: 'Dispatching task to EMI Calculator Agent…' },
         {
           label: 'EMI Calculator Agent',
           icon: '🧮',
-          detail: 'Fixed calculation engine — interest rate, tenure, rules…',
+          detail: 'Fixed calculation engine - interest rate, tenure, rules…',
           work: async () => {
-            // ★ REAL AGENT — pre-compute EMI so it's ready on the EMI page
+            // ★ REAL AGENT - pre-compute EMI so it's ready on the EMI page
             const calc = calculateEMIAgent(
               scheme,
               scheme.maxAmount,
@@ -188,7 +188,7 @@ export function App() {
             setEmiData(calc);
           },
         },
-        { label: 'Reducer Agent — Validate Output', icon: '📊', detail: 'Guardrail pass #2 — output-side policy check…' },
+        { label: 'Reducer Agent - Validate Output', icon: '📊', detail: 'Guardrail pass #2 - output-side policy check…' },
       ],
       onComplete: () => { setPipeline(null); navigate('/emi'); },
     });
@@ -201,18 +201,18 @@ export function App() {
     setPipeline({
       title: 'Locating Partner Banks…',
       steps: [
-        { label: 'JEV Supervisor — Task Contract', icon: '🤖', detail: 'Dispatching task to Partner Locator Agent…' },
+        { label: 'JEV Supervisor - Task Contract', icon: '🤖', detail: 'Dispatching task to Partner Locator Agent…' },
         {
           label: 'Partner Locator Agent',
           icon: '📍',
           detail: 'Graph-based partner search, eligibility-filtered results…',
           work: async () => {
-            // ★ REAL API CALL — fetches partner branches
+            // ★ REAL API CALL - fetches partner branches
             await locatePartnersAgent(selectedScheme?.id);
           },
         },
-        { label: 'Maps API — Geospatial Data', icon: '🗺️', detail: 'Location search, partner network, routing…' },
-        { label: 'Reducer Agent — Rank Partners', icon: '📊', detail: 'Rank by distance & services, contact + route guidance…' },
+        { label: 'Maps API - Geospatial Data', icon: '🗺️', detail: 'Location search, partner network, routing…' },
+        { label: 'Reducer Agent - Rank Partners', icon: '📊', detail: 'Rank by distance & services, contact + route guidance…' },
       ],
       onComplete: () => { setPipeline(null); navigate('/partner'); },
     });
@@ -230,15 +230,16 @@ export function App() {
           icon: '📝',
           detail: 'Compiling scheme + EMI + partner data…',
           work: async () => {
-            // ★ REAL SUBMISSION — creates the application
+            // ★ REAL SUBMISSION - creates the application
             if (selectedScheme && emiData) {
-              const response = await submitApplication(selectedScheme, emiData, partner, '+91 98765 43210', true);
+              const userPhone = localStorage.getItem('sahay_user_phone') || '+91 98765 43210';
+              const response = await submitApplication(selectedScheme, emiData, partner, userPhone, true);
               setSubmittedApp(response as any);
             }
           },
         },
         { label: 'Ranked Output Generation', icon: '📤', detail: 'Building multi-modal response with citations…' },
-        { label: 'Delivery Channel — Web Portal', icon: '🌐', detail: 'Rendering confirmation & tracker view…' },
+        { label: 'Delivery Channel - Web Portal', icon: '🌐', detail: 'Rendering confirmation & tracker view…' },
       ],
       onComplete: () => { setPipeline(null); navigate('/tracker'); },
     });
@@ -406,7 +407,7 @@ export function App() {
       {/* ─── Footer ──────────────────────────────────────── */}
       <footer className="w-full bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500">
         <div className="max-w-xl mx-auto space-y-1">
-          <p className="font-semibold text-slate-700">Sahay AI — Direct Citizen Assistance Platform</p>
+          <p className="font-semibold text-slate-700">Sahay AI | Direct Citizen Assistance Platform</p>
           <p>SIH Problem 26092 · Ministry of Social Justice and Empowerment, Govt. of India</p>
         </div>
       </footer>

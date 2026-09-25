@@ -6,17 +6,27 @@ const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJh
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function uploadDocument(file: File, folderName: string): Promise<string | null> {
-  const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-  const filePath = `${folderName}/${fileName}`;
-  
-  const { data, error } = await supabase.storage
-    .from('Documents')
-    .upload(filePath, file, { upsert: true });
+  try {
+    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = `${folderName}/${fileName}`;
     
-  if (error) {
-    console.error('Error uploading file to Supabase:', error);
+    console.log(`[Supabase Storage] Uploading ${file.name} to Documents/${filePath}...`);
+    const { data, error } = await supabase.storage
+      .from('Documents')
+      .upload(filePath, file, { 
+        upsert: true,
+        contentType: file.type || 'application/pdf'
+      });
+      
+    if (error) {
+      console.error('[Supabase Storage] Upload error:', error.message || error);
+      return null;
+    }
+    
+    console.log('[Supabase Storage] Upload success! Path:', data?.path);
+    return data?.path || filePath;
+  } catch (err) {
+    console.error('[Supabase Storage] Unexpected upload error:', err);
     return null;
   }
-  
-  return data.path;
 }

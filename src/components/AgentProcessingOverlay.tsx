@@ -57,7 +57,7 @@ export const AgentProcessingOverlay: React.FC<AgentProcessingOverlayProps> = ({
           // Continue to next step instead of freezing the entire UI
         }
       } else {
-        // No work — just animate for 800ms
+        // No work - just animate for 800ms
         await new Promise((r) => setTimeout(r, 800));
       }
 

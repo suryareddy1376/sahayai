@@ -323,10 +323,23 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
         if (docKey === 'caste_certificate') folderName = 'Caste Certificate';
         if (docKey === 'income_certificate') folderName = 'Income Certificate';
         if (docKey === 'address_proof') folderName = 'Address Proof';
+        if (docKey === 'business_proposal') folderName = 'Business Proposal';
         
         const path = await uploadDocument(file, folderName);
-        if (path && (newDocs as any)[docKey]) {
-          (newDocs as any)[docKey].storage_url = path;
+        if (path) {
+          if (!(newDocs as any)[docKey]) {
+            (newDocs as any)[docKey] = {
+              document_id: `DOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+              file_name: file.name,
+              file_size_bytes: file.size,
+              mime_type: file.type || 'application/pdf',
+              upload_timestamp: new Date().toISOString(),
+              ocr_status: 'queued',
+              storage_url: path,
+            };
+          } else {
+            (newDocs as any)[docKey].storage_url = path;
+          }
         }
       }
       const finalData = { ...formData, documents: newDocs };
@@ -561,7 +574,7 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
                     }
                     className="w-4 h-4 rounded-md text-blue-600 accent-blue-600 cursor-pointer"
                   />
-                  <span>Disability Status (दिव्यांग स्थिति) — Optional Self-Declaration</span>
+                  <span>Disability Status (दिव्यांग स्थिति) - Optional Self-Declaration</span>
                 </label>
                 <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
                   Optional
