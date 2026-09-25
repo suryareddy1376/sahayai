@@ -1,7 +1,8 @@
 import { Scheme, EMICalculation, PartnerBranch, ApplicationTrackerData, BeneficiaryProfile } from '../types';
 
 // Centralised API URL definition
-const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
+const _rawUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
+const BACKEND_URL = _rawUrl.endsWith('/') ? _rawUrl.slice(0, -1) : _rawUrl;
 
 // Application submission simulator with real backend integration
 export async function submitApplication(

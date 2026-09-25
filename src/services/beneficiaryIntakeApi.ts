@@ -3,7 +3,8 @@ import {
   BeneficiaryIntakeResponse,
 } from '../types/beneficiary';
 
-const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
+const _rawUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
+const BACKEND_URL = _rawUrl.endsWith('/') ? _rawUrl.slice(0, -1) : _rawUrl;
 
 export async function submitBeneficiaryIntakeApi(
   formData: BeneficiaryIntakeFormData
