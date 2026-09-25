@@ -232,8 +232,8 @@ export function App() {
           work: async () => {
             // ★ REAL SUBMISSION — creates the application
             if (selectedScheme && emiData) {
-              const application = await submitApplication(selectedScheme, emiData, partner);
-              setSubmittedApp(application);
+              const response = await submitApplication(selectedScheme, emiData, partner, '+91 98765 43210', true);
+              setSubmittedApp(response.receipt);
             }
           },
         },
