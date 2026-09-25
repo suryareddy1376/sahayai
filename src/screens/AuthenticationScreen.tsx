@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../services/supabaseClient';
 import {
   ShieldCheck,
   Lock,
@@ -64,7 +65,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -79,17 +80,31 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
     }
 
     setIsLoading(true);
-    // Simulate prototype authentication delay
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    // Convert mobile to mock email if it's 10 digits
+    const email = identifier.includes('@') ? identifier : `${identifier}@sahayai.com`;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       setSuccessMessage('Logged in successfully! Redirecting...');
       setTimeout(() => {
         onAuthenticated?.();
       }, 500);
-    }, 700);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || 'Invalid credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -114,14 +129,33 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
     }
 
     setIsLoading(true);
-    // Simulate prototype account creation delay
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    // Convert mobile to mock email if it's 10 digits
+    const email = identifier.includes('@') ? identifier : `${identifier}@sahayai.com`;
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+
+      if (error) throw error;
+      
       setSuccessMessage('Account created successfully! Redirecting...');
       setTimeout(() => {
         onAuthenticated?.();
       }, 500);
-    }, 700);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || 'Failed to create account.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPasswordSubmit = (e: React.FormEvent) => {
