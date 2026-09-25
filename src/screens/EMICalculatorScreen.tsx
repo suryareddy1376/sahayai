@@ -6,7 +6,7 @@ import { MoratoriumCallout } from '../components/MoratoriumCallout';
 import { ComparisonCards } from '../components/ComparisonCards';
 import { TrustBanner } from '../components/TrustBanner';
 import { getTranslatedSchemes, translateSchemeText } from '../i18n/schemeTranslations';
-import { calculateEMIAgent } from '../services/mockAgentApi';
+import { calculateEMIAgent } from '../services/agentApi';
 
 interface EMICalculatorScreenProps {
   scheme: Scheme;

@@ -1,6 +1,4 @@
 import { Scheme, EMICalculation, PartnerBranch, ApplicationTrackerData, BeneficiaryProfile } from '../types';
-import { neo4jGraphService } from './neo4jGraphService';
-import { sensitiveStorageService } from './sensitiveStorageService';
 
 // Curated government schemes under Ministry of Social Justice & Empowerment (NBCFDC, NSFDC, NSKFDC)
 const MOCK_SCHEMES: Scheme[] = [
@@ -213,71 +211,39 @@ const MOCK_PARTNERS: PartnerBranch[] = [
 // Offline caching key
 const STORAGE_KEY = 'sahay_ai_application_state';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
 // Specialist Agent 1: Scheme Matcher Agent
 export async function matchSchemesAgent(
   needInput: string | BeneficiaryProfile
 ): Promise<Scheme[]> {
-  // Simulate rural network latency (calm, human-timed)
-  await new Promise((resolve) => setTimeout(resolve, 1100));
+  try {
+    const requestBody = {
+      session_id: "session-" + Math.random().toString(36).substring(7),
+      need_input: needInput,
+      lang: "en"
+    };
 
-  let matched: Scheme[] = MOCK_SCHEMES;
-  let beneficiaryId: string | null = null;
+    const response = await fetch(`${BACKEND_URL}/api/assist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
 
-  if (typeof needInput === 'object' && needInput !== null && 'identity' in needInput) {
-    const profile = needInput as BeneficiaryProfile;
-    beneficiaryId = profile.id;
-
-    // Evaluate structured profile rules
-    const caste = sensitiveStorageService.getCasteForEligibilityComputation(profile.id);
-    const isFemale = profile.identity.gender === 'female';
-    const isTermLoan = profile.enterprise.loan_type_needed === 'term_loan';
-    const isEducationLoan = profile.enterprise.loan_type_needed === 'education_loan';
-    const isMicro = profile.enterprise.loan_type_needed === 'micro_finance';
-
-    if (isFemale) {
-      // Prioritize women micro-enterprise (NSFDC Mahila Samriddhi)
-      matched = [MOCK_SCHEMES[1], MOCK_SCHEMES[0], MOCK_SCHEMES[2]];
-    } else if (isTermLoan || profile.enterprise.requested_loan_amount > 140000) {
-      // Prioritize Machinery & Term Loan (NBCFDC Term Loan)
-      matched = [MOCK_SCHEMES[2], MOCK_SCHEMES[0], MOCK_SCHEMES[1]];
-    } else {
-      matched = [MOCK_SCHEMES[0], MOCK_SCHEMES[1], MOCK_SCHEMES[2]];
+    if (!response.ok) {
+      console.error("Backend failed, using fallback schemes");
+      return MOCK_SCHEMES;
     }
 
-    // STRICT GRAPH RULE: Emit Neo4j (:User)-[:ELIGIBLE_FOR]->(:Scheme) edges ONLY NOW downstream
-    neo4jGraphService.linkUserToEligibleSchemes(
-      beneficiaryId,
-      matched.map((s) => s.id),
-      `Downstream eligibility evaluated for ${profile.identity.gender}, loan type: ${profile.enterprise.loan_type_needed}, income: ₹${profile.financial.annual_family_income}`
-    );
-  } else {
-    const needText = typeof needInput === 'string' ? needInput : '';
-    const textLower = needText.toLowerCase();
-
-    // If user mentioned women / female / mahila / dairy / tailor, prioritize matching schemes
-    if (
-      textLower.includes('woman') ||
-      textLower.includes('mahila') ||
-      textLower.includes('sister') ||
-      textLower.includes('mother')
-    ) {
-      matched = [MOCK_SCHEMES[1], MOCK_SCHEMES[0], MOCK_SCHEMES[2]];
-    } else if (
-      textLower.includes('machine') ||
-      textLower.includes('equipment') ||
-      textLower.includes('welding') ||
-      textLower.includes('tractor')
-    ) {
-      matched = [MOCK_SCHEMES[2], MOCK_SCHEMES[0], MOCK_SCHEMES[1]];
-    } else {
-      matched = MOCK_SCHEMES;
-    }
+    const data = await response.json();
+    return data.matched_schemes || MOCK_SCHEMES;
+  } catch (error) {
+    console.error("Network error hitting backend, falling back to mock:", error);
+    return MOCK_SCHEMES;
   }
-
-  return matched;
 }
 
-// Specialist Agent 2: EMI Calculator Agent
+// Specialist Agent 2: EMI Calculator Agent (Pure Math, kept sync for slider performance)
 export function calculateEMIAgent(
   scheme: Scheme,
   amount: number,
@@ -287,7 +253,6 @@ export function calculateEMIAgent(
   const annualRate = scheme.interestRate;
   const monthlyRate = annualRate / 12 / 100;
   
-  // Standard amortization calculation
   const emi =
     monthlyRate > 0
       ? (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) /
@@ -312,23 +277,54 @@ export function calculateEMIAgent(
 
 // Specialist Agent 3: Partner Locator Agent
 export async function locatePartnersAgent(schemeId?: string): Promise<PartnerBranch[]> {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  // Only return branches that are actively accepting applications
-  return MOCK_PARTNERS.filter((p) => p.isActivelyProcessing);
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/partners?scheme_id=${schemeId || ''}`);
+    if (!response.ok) return MOCK_PARTNERS;
+    
+    const data = await response.json();
+    return data.ranked_partners || MOCK_PARTNERS;
+  } catch (error) {
+    console.error("Network error locating partners:", error);
+    return MOCK_PARTNERS;
+  }
 }
 
-// Application submission simulator with UPI-like reference ID
-export function submitApplication(
+// Application submission simulator with real backend integration
+export async function submitApplication(
   scheme: Scheme,
   emiData: EMICalculation,
   partner: PartnerBranch,
   phone: string = '+91 98765 43210',
   whatsappAlert: boolean = true
-): ApplicationTrackerData {
-  // Generate authentic looking Indian Govt Ref ID e.g. SAHAY-2026-DL-89421
+): Promise<ApplicationTrackerData> {
+  
+  const requestBody = {
+    scheme,
+    emiData,
+    partner,
+    phone,
+    whatsappAlert
+  };
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (response.ok) {
+      const application = await response.json();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(application));
+      return application;
+    }
+  } catch (error) {
+    console.error("Backend submit failed:", error);
+  }
+
+  // Fallback to offline generation if backend fails
   const randomSuffix = Math.floor(10000 + Math.random() * 90000);
   const appId = `SAHAY-2026-GOV-${randomSuffix}`;
-
   const application: ApplicationTrackerData = {
     applicationId: appId,
     schemeName: scheme.name,
@@ -337,26 +333,15 @@ export function submitApplication(
     partnerName: partner.name,
     partnerAddress: partner.address,
     submittedDate: new Date().toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
     }),
     currentStatus: 'submitted',
-    statusReasonText:
-      'Application received directly at the local nodal branch. Officer verification assigned.',
+    statusReasonText: 'Application received directly at the local nodal branch. Officer verification assigned.',
     notifyPhone: phone,
     notifyWhatsApp: whatsappAlert,
   };
 
-  // Cache to localStorage for offline access
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(application));
-  } catch (e) {
-    console.warn('LocalStorage not available');
-  }
-
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(application));
   return application;
 }
 

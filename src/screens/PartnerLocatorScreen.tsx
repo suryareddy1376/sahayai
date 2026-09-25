@@ -5,7 +5,7 @@ import { translations } from '../i18n/translations';
 import { PartnerCard } from '../components/PartnerCard';
 import { PartnerMap } from '../components/PartnerMap';
 import { TrustBanner } from '../components/TrustBanner';
-import { locatePartnersAgent } from '../services/mockAgentApi';
+import { locatePartnersAgent } from '../services/agentApi';
 
 interface PartnerLocatorScreenProps {
   scheme: Scheme;

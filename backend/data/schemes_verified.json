@@ -1,0 +1,274 @@
+[
+  {
+    "id": "nbcfdc-general-loan",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "General Term Loan Scheme",
+    "description": "Financial assistance for income-generating activities for OBC communities",
+    "category": "term",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": null,
+      "notes": "Family income <= Rs.3 lakh per annum"
+    },
+    "tiers": [
+      {"label": "Tier A", "max_amount": 500000, "interest_beneficiary_pct": 6.0, "interest_agency_pct": 3.0, "repayment_years": 8},
+      {"label": "Tier B", "max_amount": 1000000, "interest_beneficiary_pct": 7.0, "interest_agency_pct": 4.0, "repayment_years": 8},
+      {"label": "Tier C", "max_amount": 1500000, "interest_beneficiary_pct": 8.0, "interest_agency_pct": 5.0, "repayment_years": 8}
+    ],
+    "project_cost_coverage_pct": 85,
+    "moratorium_months": 6,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nbcfdc-micro-finance",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "Micro Finance Scheme",
+    "description": "Micro credit for small income-generating activities through SHGs and individuals",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": null,
+      "notes": "Family income <= Rs.3 lakh per annum"
+    },
+    "tiers": [
+      {"label": "Individual", "max_amount": 140000, "interest_beneficiary_pct": 6.5, "interest_agency_pct": 3.0, "repayment_years": 3},
+      {"label": "SHG Group", "max_amount": 250000, "interest_beneficiary_pct": 5.0, "interest_agency_pct": 2.5, "repayment_years": 3}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 6,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nbcfdc-new-swarnima-women",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "New Swarnima Scheme for Women",
+    "description": "Exclusive scheme for OBC women for self-employment ventures",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": "female",
+      "notes": "OBC women, family income <= Rs.3 lakh"
+    },
+    "tiers": [
+      {"label": "Women Micro", "max_amount": 200000, "interest_beneficiary_pct": 5.0, "interest_agency_pct": 1.0, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 6,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nbcfdc-education-loan",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "Education Loan Scheme",
+    "description": "Financial assistance for higher education for OBC students",
+    "category": "term",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": null,
+      "notes": "For professional and technical courses"
+    },
+    "tiers": [
+      {"label": "In India", "max_amount": 1000000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.5, "repayment_years": 5},
+      {"label": "Abroad", "max_amount": 2000000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.5, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 12,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nbcfdc-health-finance",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "Health Finance Scheme",
+    "description": "Financial aid for medical treatment and health-related emergencies",
+    "category": "term",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": null,
+      "notes": "For medical treatment costs"
+    },
+    "tiers": [
+      {"label": "Standard", "max_amount": 1000000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.0, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 3,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nbcfdc-silp",
+    "source": "official-verified",
+    "corporation": "NBCFDC",
+    "corporation_full": "National Backward Classes Finance & Development Corporation",
+    "name": "Swavalamban (Income-Generating Activities for SHGs)",
+    "description": "Group-based livelihood projects through Self-Help Groups",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["OBC"],
+      "max_family_income": 300000,
+      "gender": null,
+      "notes": "Through SHGs and registered groups"
+    },
+    "tiers": [
+      {"label": "SHG Loan", "max_amount": 500000, "interest_beneficiary_pct": 5.0, "interest_agency_pct": 2.0, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 90,
+    "moratorium_months": 6,
+    "official_url": "https://nbcfdc.gov.in/loan-schemes",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nsfdc-micro-finance",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Micro Credit Finance (MCF) Scheme",
+    "description": "Micro credit for self-employment and small business activities for SC communities",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": null,
+      "notes": "SC, family income <= Rs.5 lakh (revised effective 2026-01-07; previously Rs.3 lakh)"
+    },
+    "tiers": [
+      {"label": "Standard", "max_amount": 125000, "interest_beneficiary_pct": 6.5, "interest_agency_pct": 3.5, "repayment_years": 3}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 6,
+    "official_url": "https://nsfdc.nic.in/en/micro-credit-finance",
+    "last_verified": "2026-09-25",
+    "income_revision": {"previous_limit": 300000, "new_limit": 500000, "effective_date": "2026-01-07"}
+  },
+  {
+    "id": "nsfdc-term-loan",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Term Loan Scheme",
+    "description": "Term loans for self-employment activities for scheduled caste beneficiaries",
+    "category": "term",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": null,
+      "notes": "SC, family income <= Rs.5 lakh"
+    },
+    "tiers": [
+      {"label": "Up to 5L", "max_amount": 500000, "interest_beneficiary_pct": 6.0, "interest_agency_pct": 2.0, "repayment_years": 7},
+      {"label": "5L to 15L", "max_amount": 1500000, "interest_beneficiary_pct": 7.0, "interest_agency_pct": 3.0, "repayment_years": 7},
+      {"label": "15L to 45L", "max_amount": 4500000, "interest_beneficiary_pct": 8.0, "interest_agency_pct": 4.0, "repayment_years": 7}
+    ],
+    "project_cost_coverage_pct": 90,
+    "moratorium_months": 6,
+    "official_url": "https://nsfdc.nic.in/en/term-loan",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nsfdc-mahila-samriddhi",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Mahila Samriddhi Yojana",
+    "description": "Exclusive scheme for SC women for micro-enterprise development",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": "female",
+      "notes": "SC women, family income <= Rs.5 lakh"
+    },
+    "tiers": [
+      {"label": "Women Micro", "max_amount": 125000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.0, "repayment_years": 3}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 6,
+    "official_url": "https://nsfdc.nic.in/en/mahila-samriddhi-yojana",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nsfdc-education-loan",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Education Loan Scheme",
+    "description": "Financial assistance for higher education of SC students",
+    "category": "term",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": null,
+      "notes": "Professional/technical courses with minimum 50% marks in last qualifying exam"
+    },
+    "tiers": [
+      {"label": "In India", "max_amount": 1000000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.5, "repayment_years": 5},
+      {"label": "Abroad", "max_amount": 2000000, "interest_beneficiary_pct": 6.0, "interest_agency_pct": 2.5, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 12,
+    "official_url": "https://nsfdc.nic.in/en/education-loan",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nsfdc-health-finance",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Health Finance Scheme",
+    "description": "Financial aid for medical treatment for SC families",
+    "category": "term",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": null,
+      "notes": "For medical treatment at recognized hospitals"
+    },
+    "tiers": [
+      {"label": "Standard", "max_amount": 500000, "interest_beneficiary_pct": 4.0, "interest_agency_pct": 1.0, "repayment_years": 5}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 3,
+    "official_url": "https://nsfdc.nic.in/en/health-finance",
+    "last_verified": "2026-09-25"
+  },
+  {
+    "id": "nsfdc-skill-training",
+    "source": "official-verified",
+    "corporation": "NSFDC",
+    "corporation_full": "National Scheduled Castes Finance & Development Corporation",
+    "name": "Skill Training & Capacity Building",
+    "description": "Skill training programs for SC youth for wage and self-employment",
+    "category": "micro",
+    "eligibility": {
+      "caste": ["SC"],
+      "max_family_income": 500000,
+      "gender": null,
+      "notes": "SC youth aged 18-45, various skill training programs"
+    },
+    "tiers": [
+      {"label": "Training Stipend", "max_amount": 50000, "interest_beneficiary_pct": 0.0, "interest_agency_pct": 0.0, "repayment_years": 0}
+    ],
+    "project_cost_coverage_pct": 100,
+    "moratorium_months": 0,
+    "official_url": "https://nsfdc.nic.in/en/skill-training",
+    "last_verified": "2026-09-25"
+  }
+]

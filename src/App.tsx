@@ -6,7 +6,7 @@ import { useAppContext } from './context/AppContext';
 import { LanguageCode } from './types';
 import { LANGUAGES } from './i18n/translations';
 import { useVoice } from './hooks/useVoice';
-import { getCachedApplication, matchSchemesAgent, calculateEMIAgent, locatePartnersAgent, submitApplication } from './services/mockAgentApi';
+import { getCachedApplication, matchSchemesAgent, calculateEMIAgent, locatePartnersAgent, submitApplication } from './services/agentApi';
 
 // Screens
 import { AuthenticationScreen } from './screens/AuthenticationScreen';
@@ -232,7 +232,7 @@ export function App() {
           work: async () => {
             // ★ REAL SUBMISSION — creates the application
             if (selectedScheme && emiData) {
-              const application = submitApplication(selectedScheme, emiData, partner);
+              const application = await submitApplication(selectedScheme, emiData, partner);
               setSubmittedApp(application);
             }
           },
