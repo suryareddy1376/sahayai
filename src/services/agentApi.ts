@@ -211,7 +211,7 @@ const MOCK_PARTNERS: PartnerBranch[] = [
 // Offline caching key
 const STORAGE_KEY = 'sahay_ai_application_state';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // Specialist Agent 1: Scheme Matcher Agent
 export async function matchSchemesAgent(

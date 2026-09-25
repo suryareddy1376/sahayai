@@ -3,7 +3,7 @@ import {
   BeneficiaryIntakeResponse,
 } from '../types/beneficiary';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:8000';
 
 export async function submitBeneficiaryIntakeApi(
   formData: BeneficiaryIntakeFormData
@@ -22,7 +22,7 @@ export async function submitBeneficiaryIntakeApi(
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        status_code: response.status,
+        status_code: response.status as any,
         message: errorData.detail || `Server error: ${response.statusText}`,
         timestamp: new Date().toISOString(),
         beneficiary: null as any,
@@ -31,7 +31,7 @@ export async function submitBeneficiaryIntakeApi(
         document_processing: {
           batch_id: '',
           total_queued: 0,
-          status: 'failed',
+          status: 'failed' as any,
           mismatches: [],
         },
       };
@@ -43,7 +43,7 @@ export async function submitBeneficiaryIntakeApi(
     console.error("Network error submitting intake:", error);
     return {
       success: false,
-      status_code: 0,
+      status_code: 500 as any,
       message: error.message || "Network error. Please check if the backend is running.",
       timestamp: new Date().toISOString(),
       beneficiary: null as any,
@@ -52,7 +52,7 @@ export async function submitBeneficiaryIntakeApi(
       document_processing: {
         batch_id: '',
         total_queued: 0,
-        status: 'network_error',
+        status: 'failed' as any,
         mismatches: [],
       },
     };
