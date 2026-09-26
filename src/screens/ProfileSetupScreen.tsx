@@ -10,6 +10,7 @@ import {
 import { translations } from '../i18n/translations';
 import { LanguageCode, BeneficiaryIntakeResponse } from '../types';
 import { BeneficiaryIntakeForm } from '../components/BeneficiaryIntakeForm';
+import { useAppContext } from '../context/AppContext';
 
 export interface ProfileSetupScreenProps {
   /**
@@ -32,6 +33,8 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({
   onBack,
 }) => {
   const t = translations[language];
+  const { beneficiaryProfile } = useAppContext();
+  
   const handleIntakeComplete = (response: BeneficiaryIntakeResponse) => {
     if (onProfileComplete) {
       onProfileComplete(response);
@@ -98,6 +101,7 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({
       <BeneficiaryIntakeForm
         language={language}
         initialNeedText={initialNeedText}
+        initialData={beneficiaryProfile || undefined}
         onIntakeComplete={handleIntakeComplete}
       />
     </div>

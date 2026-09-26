@@ -103,12 +103,38 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
       if (data?.user?.id) {
         const { data: profileData } = await supabase
           .from('user_profiles')
-          .select('profile_data')
+          .select('*')
           .eq('id', data.user.id)
           .single();
           
-        if (profileData && profileData.profile_data) {
-          fetchedProfile = profileData.profile_data;
+        if (profileData) {
+          // Reconstruct BeneficiaryProfile from flattened schema
+          fetchedProfile = {
+            identity: {
+              fullName: profileData.full_name,
+              age: profileData.age,
+              gender: profileData.gender,
+              hasDeclaredDisability: profileData.has_declared_disability,
+              idProofNumber: profileData.id_proof_number_masked,
+            },
+            location: {
+              state: profileData.state,
+              district: profileData.district,
+              villageOrTown: profileData.village_or_town,
+              pincode: profileData.pincode,
+              isRural: profileData.is_rural,
+            },
+            financial: {
+              annualFamilyIncome: profileData.annual_family_income,
+              existingLoanFlag: profileData.existing_loan_flag,
+            },
+            enterprise: {
+              loanTypeNeeded: profileData.loan_type_needed,
+              businessSector: profileData.business_sector,
+              isNewVenture: profileData.is_new_venture,
+              requestedLoanAmount: profileData.requested_loan_amount,
+            }
+          };
         }
       }
 

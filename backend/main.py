@@ -371,7 +371,9 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
     """
     try:
         now_iso = datetime.utcnow().isoformat() + "Z"
-        user_id = str(uuid.uuid4())
+        user_id = form_data.get("user_id")
+        if not user_id:
+            user_id = str(uuid.uuid4())
 
         identity = form_data.get("identity", {})
         location = form_data.get("location", {})
@@ -396,11 +398,11 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
                 "loan_type_needed": enterprise.get("loan_type_needed", "micro_finance"),
                 "requested_loan_amount": enterprise.get("requested_loan_amount", 0)
             }
-            # Attempt insert; ignore failure if schema not run yet for dev continuity
+            # Attempt upsert; ignore failure if schema not run yet for dev continuity
             try:
-                supabase.table("user_profiles").insert(profile_record).execute()
+                supabase.table("user_profiles").upsert(profile_record).execute()
                 
-                # Insert sensitive attributes
+                # Insert or update sensitive attributes
                 sensitive_record = {
                     "record_id": f"SENS-ATTR-{uuid.uuid4().hex[:8]}",
                     "user_id": user_id,
@@ -408,7 +410,35 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
                     "disability_status": str(bool(identity.get("disability_status"))).lower(),
                     "id_proof_masked": id_masked
                 }
+                
+                # Check if it exists to preserve record_id, or just delete and recreate to keep it simple, 
+                # but upsert should work if we rely on user_id as unique, but python client might need the primary key `id`.
+                # Let's delete existing sensitive record and insert new one
+                supabase.table("user_sensitive_attributes").delete().eq("user_id", user_id).execute()
                 supabase.table("user_sensitive_attributes").insert(sensitive_record).execute()
+                
+                if education:
+                    education_record = {
+                        "user_id": user_id,
+                        "highest_qualification": education.get("highest_qualification", ""),
+                        "course_name": education.get("course_name", ""),
+                        "institution_name": education.get("institution_name", "")
+                    }
+                    supabase.table("user_education").delete().eq("user_id", user_id).execute()
+                    supabase.table("user_education").insert(education_record).execute()
+                    
+                documents = form_data.get("documents", {})
+                if documents:
+                    doc_record = {
+                        "user_id": user_id,
+                        "caste_certificate_url": documents.get("caste_certificate", {}).get("storage_url", ""),
+                        "income_certificate_url": documents.get("income_certificate", {}).get("storage_url", ""),
+                        "id_proof_url": documents.get("id_proof", {}).get("storage_url", ""),
+                        "address_proof_url": documents.get("address_proof", {}).get("storage_url", ""),
+                        "business_proposal_url": documents.get("business_proposal", {}).get("storage_url", "")
+                    }
+                    supabase.table("user_documents").delete().eq("user_id", user_id).execute()
+                    supabase.table("user_documents").insert(doc_record).execute()
             except Exception as db_err:
                 logger.error(f"Supabase write failed: {db_err}")
 
@@ -464,13 +494,14 @@ async def beneficiary_intake(form_data: dict, background_tasks: BackgroundTasks)
 #  APPLICATIONS (Tracker)
 # ══════════════════════════════════════════════════════════════════════════════
 
-# In-memory fallback
-_applications: Dict[str, dict] = {}
-
 @app.post("/api/applications")
 def create_application(body: dict):
     """Submit application and save to Supabase."""
     try:
+        user_id = body.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+            
         random_suffix = uuid.uuid4().hex[:5].upper()
         app_id = f"SAHAY-2026-GOV-{random_suffix}"
         now_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
@@ -493,27 +524,22 @@ def create_application(body: dict):
             "notifyWhatsApp": body.get("whatsappAlert", True),
         }
 
-        # Save to Supabase if available
         if supabase:
-            try:
-                db_record = {
-                    "application_id": app_id,
-                    "scheme_name": application["schemeName"],
-                    "loan_amount": application["loanAmount"],
-                    "monthly_emi": application["monthlyEMI"],
-                    "partner_name": application["partnerName"],
-                    "partner_address": application["partnerAddress"],
-                    "status": "submitted",
-                    "status_reason": application["statusReasonText"],
-                    "notify_phone": application["notifyPhone"],
-                    "notify_whatsapp": application["notifyWhatsApp"]
-                }
-                supabase.table("applications").insert(db_record).execute()
-            except Exception as e:
-                logger.error(f"Failed to write application to Supabase: {e}")
+            db_record = {
+                "application_id": app_id,
+                "user_id": user_id,
+                "scheme_name": application["schemeName"],
+                "loan_amount": application["loanAmount"],
+                "monthly_emi": application["monthlyEMI"],
+                "partner_name": application["partnerName"],
+                "partner_address": application["partnerAddress"],
+                "status": "submitted",
+                "status_reason": application["statusReasonText"],
+            }
+            supabase.table("applications").insert(db_record).execute()
+        else:
+            raise Exception("Supabase is required for tracking applications securely.")
 
-        # Always store in memory fallback so frontend works smoothly even if DB fails
-        _applications[app_id] = application
         return application
 
     except Exception as e:
@@ -526,7 +552,7 @@ def create_application(body: dict):
 
 @app.get("/api/applications/{app_id}")
 def get_application(app_id: str):
-    """Get application tracker status from Supabase or memory."""
+    """Get application tracker status from Supabase."""
     if supabase:
         try:
             res = supabase.table("applications").select("*").eq("application_id", app_id).limit(1).execute()
@@ -548,10 +574,7 @@ def get_application(app_id: str):
         except Exception as e:
             logger.error(f"Supabase read error: {e}")
 
-    application = _applications.get(app_id)
-    if not application:
-        raise HTTPException(status_code=404, detail=f"Application {app_id} not found")
-    return application
+    raise HTTPException(status_code=404, detail=f"Application {app_id} not found")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

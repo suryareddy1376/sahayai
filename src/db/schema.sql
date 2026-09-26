@@ -251,6 +251,7 @@ CREATE INDEX idx_audit_timestamp ON user_sensitive_audit_log(timestamp);
 CREATE TABLE IF NOT EXISTS applications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     application_id VARCHAR(100) UNIQUE NOT NULL,
+    user_id UUID REFERENCES user_profiles(id),
     scheme_name VARCHAR(255) NOT NULL,
     loan_amount INT NOT NULL,
     monthly_emi INT NOT NULL,

@@ -32,6 +32,7 @@ import {
   LanguageCode,
   UploadedDocumentMeta,
   DocumentMismatchFlag,
+  BeneficiaryProfile,
 } from '../types';
 import { uploadDocument } from '../services/supabaseClient';
 import { submitBeneficiaryIntakeApi } from '../services/beneficiaryIntakeApi';
@@ -41,6 +42,7 @@ export interface ValidationError { field: string; message: string; group?: strin
 interface BeneficiaryIntakeFormProps {
   language: LanguageCode;
   initialNeedText?: string;
+  initialData?: BeneficiaryProfile;
   onIntakeComplete: (response: BeneficiaryIntakeResponse) => void;
 }
 
@@ -56,10 +58,38 @@ const DEFAULT_DOC = (name: string, type: string): UploadedDocumentMeta => ({
 export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
   language,
   initialNeedText,
+  initialData,
   onIntakeComplete,
 }) => {
   // Form State
-  const [formData, setFormData] = useState<BeneficiaryIntakeFormData>({
+  const [formData, setFormData] = useState<BeneficiaryIntakeFormData>(() => {
+    if (initialData) {
+      return {
+        identity: {
+          full_name: initialData.identity.full_name || '',
+          age: initialData.identity.age || 0,
+          gender: initialData.identity.gender || 'female',
+          caste_category: 'General', // Default sensitive
+          id_proof_number: '',
+          disability_status: initialData.identity.has_disability || false,
+          disability_consent: initialData.identity.has_disability || false,
+        },
+        location: initialData.location || {
+          state: '', district: '', village_or_town: '', pincode: '', is_rural: false
+        },
+        financial: initialData.financial || {
+          annual_family_income: 0, existing_loan_flag: false, existing_loan_npa_status: 'none'
+        },
+        enterprise: initialData.enterprise || {
+          loan_type_needed: 'micro_finance', business_sector: 'other', is_new_venture: true, requested_loan_amount: 0
+        },
+        education: initialData.education || {
+          highest_qualification: '', course_name: '', institution_name: ''
+        },
+        documents: initialData.documents || {},
+      };
+    }
+    return {
     identity: {
       full_name: '',
       age: 0,
@@ -96,6 +126,7 @@ export const BeneficiaryIntakeForm: React.FC<BeneficiaryIntakeFormProps> = ({
     },
     documents: {
     },
+    };
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);

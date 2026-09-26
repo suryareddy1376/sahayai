@@ -3,6 +3,8 @@ import {
   BeneficiaryIntakeResponse,
 } from '../types/beneficiary';
 
+import { supabase } from './supabaseClient';
+
 const _rawUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
 const BACKEND_URL = _rawUrl.endsWith('/') ? _rawUrl.slice(0, -1) : _rawUrl;
 
@@ -11,12 +13,18 @@ export async function submitBeneficiaryIntakeApi(
 ): Promise<BeneficiaryIntakeResponse> {
   
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const payload = {
+      ...formData,
+      user_id: session?.user?.id
+    };
+
     const response = await fetch(`${BACKEND_URL}/api/intake`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {

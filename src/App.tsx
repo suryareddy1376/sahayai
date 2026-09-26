@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { supabase } from './services/supabaseClient';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { VolumeX, Globe, WifiOff, LayoutDashboard } from 'lucide-react';
 
@@ -83,6 +84,24 @@ export function App() {
     };
   }, []);
 
+  // Route Guard
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const protectedRoutes = ['/dashboard', '/profile', '/speak-need', '/schemes', '/emi', '/partner', '/tracker'];
+      
+      if (protectedRoutes.includes(location.pathname)) {
+        if (!session) {
+          navigate('/auth', { replace: true });
+        } else if (location.pathname !== '/profile' && !beneficiaryProfile) {
+          // If logged in but no profile, send to profile setup
+          navigate('/profile', { replace: true });
+        }
+      }
+    };
+    checkAuth();
+  }, [location.pathname, navigate, beneficiaryProfile]);
+
   const currentStep = pathStepMap[location.pathname] || 0;
   const isAuthFlow = ['/auth', '/profile', '/dashboard'].includes(location.pathname);
   const isFlowPage = currentStep > 0;
@@ -100,7 +119,7 @@ export function App() {
         { label: 'Creating session token', icon: '🪪', detail: 'Generating secure JWT token…' },
         { label: 'Loading Context Store', icon: '💾', detail: 'Initializing user session memory…' },
       ],
-      onComplete: () => { setPipeline(null); if (existingProfile) { setBeneficiaryProfile(existingProfile); navigate('/dashboard'); } else { navigate('/profile'); } },
+      onComplete: () => { setPipeline(null); if (existingProfile) { setBeneficiaryProfile(existingProfile); navigate('/dashboard', { replace: true }); } else { navigate('/profile', { replace: true }); } },
     });
   }, [navigate, setBeneficiaryProfile]);
 
@@ -122,7 +141,7 @@ export function App() {
         { label: 'Intent & Entity Extraction', icon: '🧠', detail: 'Extracting profile, query type, key parameters…' },
         { label: 'Supervisor Agent - Context Store', icon: '📋', detail: 'Writing profile to Context Store (session memory)…' },
       ],
-      onComplete: () => { setPipeline(null); navigate('/dashboard'); },
+      onComplete: () => { setPipeline(null); navigate('/dashboard', { replace: true }); },
     });
   }, [navigate, setIntakeResponse, setBeneficiaryProfile]);
 
@@ -243,7 +262,7 @@ export function App() {
         { label: 'Ranked Output Generation', icon: '📤', detail: 'Building multi-modal response with citations…' },
         { label: 'Delivery Channel - Web Portal', icon: '🌐', detail: 'Rendering confirmation & tracker view…' },
       ],
-      onComplete: () => { setPipeline(null); navigate('/tracker'); },
+      onComplete: () => { setPipeline(null); navigate('/tracker', { replace: true }); },
     });
   }, [selectedScheme, emiData, setSelectedPartner, setSubmittedApp, navigate]);
 
@@ -258,7 +277,7 @@ export function App() {
     setSelectedPartner(null);
     setSubmittedApp(null);
     stopSpeaking();
-    navigate(beneficiaryProfile ? '/dashboard' : '/');
+    navigate(beneficiaryProfile ? '/dashboard' : '/', { replace: true });
   }, [beneficiaryProfile, navigate, resetTranscript, setActiveQuery, setCompareScheme, setEmiData, setSelectedPartner, setSelectedScheme, setSubmittedApp, setUserNeedText, stopSpeaking]);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -331,7 +350,7 @@ export function App() {
             <div className="min-h-screen bg-slate-50 py-6 px-4">
               <ProfileSetupScreen language={language}
                 onProfileComplete={handleProfileComplete}
-                onBack={() => navigate('/auth')} />
+                onBack={() => navigate('/auth', { replace: true })} />
             </div>
           } />
 
@@ -340,7 +359,7 @@ export function App() {
             <div className="min-h-screen bg-slate-50 py-6 px-4">
               <DashboardScreen profile={beneficiaryProfile} language={language}
                 onEditProfile={() => navigate('/profile')}
-                onLogout={() => { setBeneficiaryProfile(null); setIntakeResponse(null); navigate('/auth'); }}
+                onLogout={() => { setBeneficiaryProfile(null); setIntakeResponse(null); navigate('/auth', { replace: true }); }}
                 onFindSchemes={() => navigate('/speak-need')}
                 onApplicationTracker={() => {
                   if (!submittedApp) { const cached = getCachedApplication(); if (cached) setSubmittedApp(cached); }

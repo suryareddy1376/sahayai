@@ -1,4 +1,5 @@
 import { Scheme, EMICalculation, PartnerBranch, ApplicationTrackerData, BeneficiaryProfile } from '../types';
+import { supabase } from './supabaseClient';
 
 // Centralised API URL definition
 const _rawUrl = (import.meta as any).env?.VITE_BACKEND_URL || 'https://sahayai-4dzp.onrender.com';
@@ -13,10 +14,11 @@ export async function submitApplication(
   whatsappAlert: boolean
 ): Promise<ApplicationTrackerData> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     const response = await fetch(`${BACKEND_URL}/api/applications`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scheme, emiData, partner, phone, whatsappAlert }),
+      body: JSON.stringify({ scheme, emiData, partner, phone, whatsappAlert, user_id: session?.user?.id }),
     });
     
     if (!response.ok) {
@@ -45,8 +47,10 @@ export async function matchSchemesAgent(
   language: string = 'en'
 ): Promise<Scheme[]> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const sessionId = session?.user?.id ? `ses_${session.user.id}` : `ses_${localStorage.getItem('sahay_user_phone') || 'anon'}`;
     const payload = {
-      session_id: `ses_${Date.now()}`,
+      session_id: sessionId,
       need_input: needInput,
       lang: language
     };
