@@ -64,6 +64,7 @@ speech_adapter = SpeechAdapter(
     sarvam_api_key=settings.SARVAM_API_KEY or "",
     bhashini_api_key=settings.BHASHINI_API_KEY,
     bhashini_user_id=settings.BHASHINI_USER_ID,
+    bhashini_pipeline_id=settings.BHASHINI_PIPELINE_ID,
 )
 
 document_adapter = DocumentAdapter(sarvam_api_key=settings.SARVAM_API_KEY or "")

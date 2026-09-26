@@ -92,7 +92,7 @@ export function App() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   // 1. Auth → Profile
-  const handleAuthenticated = useCallback(() => {
+  const handleAuthenticated = useCallback((existingProfile?: any) => {
     setPipeline({
       title: 'Authenticating…',
       steps: [
@@ -100,9 +100,9 @@ export function App() {
         { label: 'Creating session token', icon: '🪪', detail: 'Generating secure JWT token…' },
         { label: 'Loading Context Store', icon: '💾', detail: 'Initializing user session memory…' },
       ],
-      onComplete: () => { setPipeline(null); navigate('/profile'); },
+      onComplete: () => { setPipeline(null); if (existingProfile) { setBeneficiaryProfile(existingProfile); navigate('/dashboard'); } else { navigate('/profile'); } },
     });
-  }, [navigate]);
+  }, [navigate, setBeneficiaryProfile]);
 
   // 2. Profile → Dashboard
   const handleProfileComplete = useCallback((response: any) => {

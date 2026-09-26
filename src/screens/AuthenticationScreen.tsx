@@ -22,7 +22,7 @@ import { translations } from '../i18n/translations';
 
 export interface AuthenticationScreenProps {
   language?: LanguageCode;
-  onAuthenticated?: () => void;
+  onAuthenticated?: (profile?: any) => void;
   initialMode?: 'login' | 'signup';
 }
 
@@ -97,12 +97,27 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
       });
 
       if (error) throw error;
+      
+      // Try fetching profile from Supabase
+      let fetchedProfile = null;
+      if (data?.user?.id) {
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('profile_data')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileData && profileData.profile_data) {
+          fetchedProfile = profileData.profile_data;
+        }
+      }
 
       localStorage.setItem('sahay_user_phone', identifier.trim());
-      setSuccessMessage('Logged in successfully! Redirecting...');
+      setSuccessMessage(t.authSignInBtn + '... ');
       setTimeout(() => {
-        onAuthenticated?.();
+        onAuthenticated?.(fetchedProfile);
       }, 500);
+
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err.message || 'Invalid credentials.');
