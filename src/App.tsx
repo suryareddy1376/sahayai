@@ -20,6 +20,7 @@ import { PartnerLocatorScreen } from './screens/PartnerLocatorScreen';
 import { ConfirmationTrackerScreen } from './screens/ConfirmationTrackerScreen';
 import { ProgressStepper } from './components/ProgressStepper';
 import { AgentProcessingOverlay, PipelineStep } from './components/AgentProcessingOverlay';
+import { LanguageModal } from './components/LanguageModal';
 
 // Map path to step for the ProgressStepper
 const pathStepMap: Record<string, number> = {
@@ -68,6 +69,7 @@ export function App() {
 
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(false);
   const [pipeline, setPipeline] = useState<PipelineState | null>(null);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
 
   // Offline detection
   useEffect(() => {
@@ -287,13 +289,16 @@ export function App() {
                 <VolumeX className="w-3.5 h-3.5" /><span>Stop Voice</span>
               </button>
             )}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              <Globe className="w-3.5 h-3.5 text-slate-500 ml-1.5" />
-              <select value={language} onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-                className="bg-transparent text-xs font-bold text-slate-700 py-1 pr-2 outline-hidden cursor-pointer">
-                {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.nativeName}</option>))}
-              </select>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsLanguageModalOpen(true)}
+              className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-900 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition-all shadow-xs ml-1"
+              title="Change Language"
+            >
+              <Globe className="w-4 h-4 text-blue-600" />
+              <span>{LANGUAGES.find((l) => l.code === language)?.flag} {LANGUAGES.find((l) => l.code === language)?.nativeName}</span>
+              <span className="hidden sm:inline-block text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded font-semibold ml-0.5">Change</span>
+            </button>
           </div>
         </div>
       </header>
@@ -411,6 +416,12 @@ export function App() {
           <p>SIH Problem 26092 · Ministry of Social Justice and Empowerment, Govt. of India</p>
         </div>
       </footer>
+      <LanguageModal 
+        isOpen={isLanguageModalOpen}
+        onClose={() => setIsLanguageModalOpen(false)}
+        language={language}
+        onSelectLanguage={setLanguage}
+      />
     </div>
   );
 }
