@@ -322,7 +322,7 @@ export function App() {
           {/* Auth */}
           <Route path="/auth" element={
             <div className="min-h-screen bg-slate-50 py-6 px-4">
-              <AuthenticationScreen onAuthenticated={handleAuthenticated} />
+              <AuthenticationScreen onAuthenticated={handleAuthenticated} language={language} />
             </div>
           } />
 

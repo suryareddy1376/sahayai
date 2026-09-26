@@ -7,6 +7,7 @@ import {
   Sparkles,
   ArrowLeft,
 } from 'lucide-react';
+import { translations } from '../i18n/translations';
 import { LanguageCode, BeneficiaryIntakeResponse } from '../types';
 import { BeneficiaryIntakeForm } from '../components/BeneficiaryIntakeForm';
 
@@ -30,6 +31,7 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({
   initialNeedText = '',
   onBack,
 }) => {
+  const t = translations[language];
   const handleIntakeComplete = (response: BeneficiaryIntakeResponse) => {
     if (onProfileComplete) {
       onProfileComplete(response);

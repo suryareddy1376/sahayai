@@ -17,7 +17,11 @@ import {
   HelpCircle,
 } from 'lucide-react';
 
+import { LanguageCode } from '../types';
+import { translations } from '../i18n/translations';
+
 export interface AuthenticationScreenProps {
+  language?: LanguageCode;
   onAuthenticated?: () => void;
   initialMode?: 'login' | 'signup';
 }
@@ -27,7 +31,9 @@ type AuthMode = 'login' | 'signup' | 'forgot-password';
 export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
   onAuthenticated,
   initialMode = 'login',
+  language = 'hi',
 }) => {
+  const t = translations[language];
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
   // Form Fields
@@ -196,7 +202,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
           Sahay AI <span className="text-blue-600">सहाय</span>
         </h1>
         <p className="text-sm sm:text-base text-slate-600 font-medium max-w-md mx-auto">
-          Empowering India’s entrepreneurs and artisans with tailored government schemes, concessional credit, and verified support.
+          {t.authAppDesc}
         </p>
       </div>
 
@@ -215,7 +221,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
               }`}
             >
               <User className="w-4 h-4" />
-              <span>Log In</span>
+              <span>{t.authLoginTab}</span>
             </button>
             <button
               type="button"
@@ -227,7 +233,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
               }`}
             >
               <Sparkles className="w-4 h-4 text-blue-600" />
-              <span>Create Account</span>
+              <span>{t.authSignupTab}</span>
             </button>
           </div>
         ) : (
@@ -238,10 +244,10 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
               className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Login</span>
+              <span>{t.authBackLogin}</span>
             </button>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Account Recovery
+              {t.authRecoveryTitle}
             </span>
           </div>
         )}
@@ -323,7 +329,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
                     onClick={() => switchMode('forgot-password')}
                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
-                    Forgot password?
+                    {t.authForgotPass}
                   </button>
                 </div>
                 <div className="relative">
@@ -389,13 +395,13 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
           {/* MODE 2: SIGN UP FORM */}
           {mode === 'signup' && (
             <form onSubmit={handleSignupSubmit} className="space-y-4">
-              {/* Full Name */}
+              {/* {t.authFullName} */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="signup-name"
                   className="block text-xs font-bold text-slate-700 uppercase tracking-wider"
                 >
-                  Full Name (as per Aadhaar / PAN) <span className="text-red-500">*</span>
+                  {t.authFullName} (as per Aadhaar / PAN) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -470,13 +476,13 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({
                 </div>
               </div>
 
-              {/* Confirm Password */}
+              {/* {t.authConfirmPassword} */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="signup-confirm-password"
                   className="block text-xs font-bold text-slate-700 uppercase tracking-wider"
                 >
-                  Confirm Password <span className="text-red-500">*</span>
+                  {t.authConfirmPassword} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">

@@ -17,6 +17,22 @@ export const LANGUAGES = [
 ];
 
 export interface TranslationStrings {
+  authLoginTab: string;
+  authSignupTab: string;
+  authRecoveryTitle: string;
+  authFullName: string;
+  authEmailPhone: string;
+  authPassword: string;
+  authConfirmPassword: string;
+  authRememberMe: string;
+  authForgotPass: string;
+  authSignInBtn: string;
+  authCreateBtn: string;
+  authSendLinkBtn: string;
+  authBackLogin: string;
+  authAppDesc: string;
+  profileTitle: string;
+  profileSubtitle: string;
   appTagline: string;
   welcomeTitle: string;
   welcomeSubtitle: string;
@@ -132,6 +148,22 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     welcomeSubtitle: "आसानी से सही सरकारी योजनाएं खोजें",
     getStarted: "शुरू करें",
     securePortal: "सुरक्षित नागरिक पोर्टल",
+    authLoginTab: 'Log In',
+    authSignupTab: 'Create Account',
+    authRecoveryTitle: 'Account Recovery',
+    authFullName: 'Full Name',
+    authEmailPhone: 'Email or Phone Number',
+    authPassword: 'Password',
+    authConfirmPassword: 'Confirm Password',
+    authRememberMe: 'Remember me',
+    authForgotPass: 'Forgot password?',
+    authSignInBtn: 'Sign In',
+    authCreateBtn: 'Create Secure Account',
+    authSendLinkBtn: 'Send Recovery Link',
+    authBackLogin: 'Back to Login',
+    authAppDesc: 'Empowering India’s entrepreneurs and artisans with tailored government schemes, concessional credit, and verified support.',
+    profileTitle: 'Beneficiary Profile',
+    profileSubtitle: 'Please fill out your details to find the best schemes.',
     stepOf: 'कदम',
     step1: 'भाषा और भरोसा',
     step2: 'अपनी ज़रूरत बोलें',
@@ -233,6 +265,22 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     welcomeSubtitle: "Find the right government schemes easily",
     getStarted: "Get Started",
     securePortal: "Secure Citizen Portal",
+    authLoginTab: 'Log In',
+    authSignupTab: 'Create Account',
+    authRecoveryTitle: 'Account Recovery',
+    authFullName: 'Full Name',
+    authEmailPhone: 'Email or Phone Number',
+    authPassword: 'Password',
+    authConfirmPassword: 'Confirm Password',
+    authRememberMe: 'Remember me',
+    authForgotPass: 'Forgot password?',
+    authSignInBtn: 'Sign In',
+    authCreateBtn: 'Create Secure Account',
+    authSendLinkBtn: 'Send Recovery Link',
+    authBackLogin: 'Back to Login',
+    authAppDesc: 'Empowering India’s entrepreneurs and artisans with tailored government schemes, concessional credit, and verified support.',
+    profileTitle: 'Beneficiary Profile',
+    profileSubtitle: 'Please fill out your details to find the best schemes.',
     stepOf: 'Step',
     step1: 'Language & Trust',
     step2: 'Speak Your Need',
@@ -334,6 +382,22 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     welcomeSubtitle: "Find the right government schemes easily",
     getStarted: "Get Started",
     securePortal: "Secure Citizen Portal",
+    authLoginTab: 'Log In',
+    authSignupTab: 'Create Account',
+    authRecoveryTitle: 'Account Recovery',
+    authFullName: 'Full Name',
+    authEmailPhone: 'Email or Phone Number',
+    authPassword: 'Password',
+    authConfirmPassword: 'Confirm Password',
+    authRememberMe: 'Remember me',
+    authForgotPass: 'Forgot password?',
+    authSignInBtn: 'Sign In',
+    authCreateBtn: 'Create Secure Account',
+    authSendLinkBtn: 'Send Recovery Link',
+    authBackLogin: 'Back to Login',
+    authAppDesc: 'Empowering India’s entrepreneurs and artisans with tailored government schemes, concessional credit, and verified support.',
+    profileTitle: 'Beneficiary Profile',
+    profileSubtitle: 'Please fill out your details to find the best schemes.',
     stepOf: 'पायरी',
     step1: 'भाषा आणि विश्वास',
     step2: 'तुमची गरज बोला',
@@ -435,6 +499,22 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
     welcomeSubtitle: "Find the right government schemes easily",
     getStarted: "Get Started",
     securePortal: "Secure Citizen Portal",
+    authLoginTab: 'Log In',
+    authSignupTab: 'Create Account',
+    authRecoveryTitle: 'Account Recovery',
+    authFullName: 'Full Name',
+    authEmailPhone: 'Email or Phone Number',
+    authPassword: 'Password',
+    authConfirmPassword: 'Confirm Password',
+    authRememberMe: 'Remember me',
+    authForgotPass: 'Forgot password?',
+    authSignInBtn: 'Sign In',
+    authCreateBtn: 'Create Secure Account',
+    authSendLinkBtn: 'Send Recovery Link',
+    authBackLogin: 'Back to Login',
+    authAppDesc: 'Empowering India’s entrepreneurs and artisans with tailored government schemes, concessional credit, and verified support.',
+    profileTitle: 'Beneficiary Profile',
+    profileSubtitle: 'Please fill out your details to find the best schemes.',
     stepOf: 'படி',
     step1: 'மொழி & நம்பிக்கை',
     step2: 'தேவையை பேசவும்',
