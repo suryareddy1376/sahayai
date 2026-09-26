@@ -1,7 +1,12 @@
 import { TranslationStrings } from './translations';
 
 export const ur: TranslationStrings = {
-  stepOf: 'کدم',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'کدم',
   step1: 'زبان اور بھروسہ',
   step2: 'اپنی ضرورت بولیں',
   step3: 'آپ کے لیے اسکیمیں',
@@ -87,7 +92,12 @@ export const ur: TranslationStrings = {
 };
 
 export const kn: TranslationStrings = {
-  stepOf: 'ಹಂತ',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'ಹಂತ',
   step1: 'ಭಾಷೆ ಮತ್ತು ನಂಬಿಕೆ',
   step2: 'ನಿಮ್ಮ ಅಗತ್ಯವನ್ನು ಹೇಳಿ',
   step3: 'ನಿಮಗಾಗಿ ಯೋಜನೆಗಳು',
@@ -173,7 +183,12 @@ export const kn: TranslationStrings = {
 };
 
 export const od: TranslationStrings = {
-  stepOf: 'ପଦକ୍ଷେପ',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'ପଦକ୍ଷେପ',
   step1: 'ଭାଷା ଏବଂ ବିଶ୍ୱାସ',
   step2: 'ଆପଣଙ୍କର ଆବଶ୍ୟକତା କୁହନ୍ତୁ',
   step3: 'ଆପଣଙ୍କ ପାଇଁ ଯୋଜନାଗୁଡ଼ିକ',
@@ -259,7 +274,12 @@ export const od: TranslationStrings = {
 };
 
 export const ml: TranslationStrings = {
-  stepOf: 'ഘട്ടം',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'ഘട്ടം',
   step1: 'ഭാഷയും വിശ്വാസവും',
   step2: 'നിങ്ങളുടെ ആവശ്യം പറയുക',
   step3: 'നിങ്ങൾക്കുള്ള പദ്ധതികൾ',

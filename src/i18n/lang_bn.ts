@@ -1,7 +1,12 @@
 import { TranslationStrings } from './translations';
 
 export const bn: TranslationStrings = {
-  stepOf: 'ধাপ',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'ধাপ',
   step1: 'ভাষা ও বিশ্বাস',
   step2: 'আপনার প্রয়োজন বলুন',
   step3: 'আপনার জন্য প্রকল্প',
@@ -87,7 +92,12 @@ export const bn: TranslationStrings = {
 };
 
 export const te: TranslationStrings = {
-  stepOf: 'దశ',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'దశ',
   step1: 'భాష మరియు నమ్మకం',
   step2: 'మీ అవసరాన్ని చెప్పండి',
   step3: 'మీ కోసం పథకాలు',
@@ -173,7 +183,12 @@ export const te: TranslationStrings = {
 };
 
 export const gu: TranslationStrings = {
-  stepOf: 'પગલું',
+  appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
+    stepOf: 'પગલું',
   step1: 'ભાષા અને વિશ્વાસ',
   step2: 'તમારી જરૂરિયાત બોલો',
   step3: 'તમારા માટે યોજનાઓ',

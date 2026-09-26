@@ -17,6 +17,12 @@ export const LANGUAGES = [
 ];
 
 export interface TranslationStrings {
+  appTagline: string;
+  welcomeTitle: string;
+  welcomeSubtitle: string;
+  getStarted: string;
+  securePortal: string;
+  
   // Stepper
   stepOf: string;
   step1: string;
@@ -121,6 +127,11 @@ export interface TranslationStrings {
 
 export const translations: Record<LanguageCode, TranslationStrings> = {
   hi: {
+    appTagline: "छोटे शिल्प, दुकान और व्यापार मालिकों के लिए सरकारी वित्तीय योजनाएं।",
+    welcomeTitle: "सहाय AI में आपका स्वागत है",
+    welcomeSubtitle: "आसानी से सही सरकारी योजनाएं खोजें",
+    getStarted: "शुरू करें",
+    securePortal: "सुरक्षित नागरिक पोर्टल",
     stepOf: 'कदम',
     step1: 'भाषा और भरोसा',
     step2: 'अपनी ज़रूरत बोलें',
@@ -217,6 +228,11 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
   },
 
   en: {
+    appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
     stepOf: 'Step',
     step1: 'Language & Trust',
     step2: 'Speak Your Need',
@@ -313,6 +329,11 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
   },
 
   mr: {
+    appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
     stepOf: 'पायरी',
     step1: 'भाषा आणि विश्वास',
     step2: 'तुमची गरज बोला',
@@ -409,6 +430,11 @@ export const translations: Record<LanguageCode, TranslationStrings> = {
   },
 
   ta: {
+    appTagline: "Government financial schemes for small craft, shop & trade owners.",
+    welcomeTitle: "Welcome to Sahay AI",
+    welcomeSubtitle: "Find the right government schemes easily",
+    getStarted: "Get Started",
+    securePortal: "Secure Citizen Portal",
     stepOf: 'படி',
     step1: 'மொழி & நம்பிக்கை',
     step2: 'தேவையை பேசவும்',
